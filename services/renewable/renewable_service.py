@@ -201,30 +201,30 @@ def _rows_until(asset_id: str, timestamp: Any) -> tuple[dict[str, Any], pd.DataF
 
 
 def _root_cause_artifact_status() -> None:
-    """Check root-cause artifacts once and make missing persistence visible."""
+    """Initialize and load trained solar and wind root-cause models safely once."""
     global _ROOT_CAUSE_ARTIFACT_CHECKED
-    if _ROOT_CAUSE_ARTIFACT_CHECKED or _root_cause_module._BUNDLES:
+    if _ROOT_CAUSE_ARTIFACT_CHECKED and _root_cause_module._BUNDLES:
         return
     _ROOT_CAUSE_ARTIFACT_CHECKED = True
-    candidates = [
-        _MODEL_DIR / "root_cause_xgb_solar.pkl",
-        _MODEL_DIR / "root_cause_xgb_wind.pkl",
-    ]
-    present = [path for path in candidates if path.exists()]
-    if present:
-        logger.warning(
-            "Root-cause model artifact(s) found at %s, but root_cause.py has no "
-            "persisted-bundle loader; its in-memory training rows are unavailable. "
-            "Root-cause analysis remains uncertain until a bundle is registered.",
-            ", ".join(str(path) for path in present),
-        )
-    else:
-        logger.warning(
-            "Root-cause model artifacts are unavailable (%s). "
-            "analyzeRootCause will return category='uncertain', confidence=0.0 "
-            "until a root-cause bundle is trained and registered.",
-            ", ".join(str(path) for path in candidates),
-        )
+    for asset_type in ("solar", "wind"):
+        if asset_type not in _root_cause_module._BUNDLES:
+            try:
+                _root_cause_module.load_root_cause_model(asset_type, _MODEL_DIR)
+                logger.info("[renewable_service] Loaded trained root-cause model for '%s'", asset_type)
+            except Exception as exc:
+                logger.error("[renewable_service] Failed to load root-cause model for '%s': %s", asset_type, exc)
+                raise RenewableDataError(
+                    "ROOT_CAUSE_MODEL_UNAVAILABLE",
+                    f"Root cause XGBoost model for '{asset_type}' could not be loaded: {exc}",
+                ) from exc
+
+
+# Execute root-cause models startup initialization
+try:
+    _root_cause_artifact_status()
+except Exception as _startup_exc:
+    logger.warning("[renewable_service] Startup root-cause model load deferred: %s", _startup_exc)
+
 
 
 def _trailing_context(data: pd.DataFrame, timestamp: pd.Timestamp) -> pd.DataFrame:

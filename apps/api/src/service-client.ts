@@ -33,25 +33,12 @@ export class ServiceClient {
       if (resp.ok) {
         return (await resp.json()) as GridState;
       }
-    } catch {
-      logger.debug("Downstream data service unavailable, using operational baseline", { zoneId });
+      throw new ServiceError("TELEMETRY_SERVICE_ERROR", `Substation telemetry service returned HTTP ${resp.status}`, resp.status >= 500 ? 503 : resp.status);
+    } catch (error) {
+      if (error instanceof ServiceError) throw error;
+      logger.warn("Downstream grid data telemetry service unavailable", { zoneId, reason: error });
+      throw new ServiceError("TELEMETRY_SERVICE_UNAVAILABLE", `Grid telemetry service could not be reached for zone ${zoneId}`, 503);
     }
-
-    // Baseline 15-minute operational snapshot conforming to GridState contract
-    return {
-      timestamp: new Date().toISOString(),
-      zoneId,
-      demandMw: 85.4,
-      solarGenerationMw: 32.1,
-      windGenerationMw: 24.5,
-      netLoadMw: 28.8,
-      batterySocPercent: 65.0,
-      batteryPowerMw: 0.0,
-      curtailmentMw: 0.0,
-      gridFrequencyHz: 50.01,
-      gridStressIndex: 0.42,
-      activeAlertsCount: 0,
-    };
   }
 
   /**
@@ -64,36 +51,12 @@ export class ServiceClient {
       if (resp.ok) {
         return (await resp.json()) as DemandForecast;
       }
-    } catch {
-      logger.debug("Downstream forecast service unavailable, delegating to baseline contract", { zoneId, horizonMinutes });
+      throw new ServiceError("FORECAST_SERVICE_ERROR", `Demand forecasting service returned HTTP ${resp.status}`, resp.status >= 500 ? 503 : resp.status);
+    } catch (error) {
+      if (error instanceof ServiceError) throw error;
+      logger.warn("Downstream forecast service unavailable", { zoneId, horizonMinutes, reason: error });
+      throw new ServiceError("FORECAST_SERVICE_UNAVAILABLE", `Demand forecasting model service could not be reached for zone ${zoneId}`, 503);
     }
-
-    const now = Date.now();
-    const stepMs = 15 * 60 * 1000;
-    const numSteps = Math.max(1, Math.round(horizonMinutes / 15));
-    const points = Array.from({ length: numSteps }, (_, i) => {
-      const ptTime = new Date(now + (i + 1) * stepMs).toISOString();
-      const baseLoad = 85.0 + Math.sin((now / 100000) + i) * 8.0;
-      return {
-        timestamp: ptTime,
-        demandMw: Math.round(baseLoad * 10) / 10,
-        lowerBoundMw: Math.round((baseLoad - 3.5) * 10) / 10,
-        upperBoundMw: Math.round((baseLoad + 4.2) * 10) / 10,
-      };
-    });
-
-    return {
-      zoneId,
-      generatedAt: new Date(now).toISOString(),
-      horizonMinutes,
-      points,
-      spikeRisk: {
-        level: "normal",
-        probability: 0.12,
-        predictedPeakMw: Math.max(...points.map((p) => p.demandMw)),
-      },
-      modelVersion: "lightgbm-demand-v1.0",
-    };
   }
 
   /**
@@ -107,20 +70,12 @@ export class ServiceClient {
     anomaliesOnly?: boolean;
   } = {}): Promise<RenewableStatus[]> {
     const isAnomaliesOnly = request.anomaliesOnly === true;
-    if (isAnomaliesOnly ? (!request.start || !request.end) : (!request.assetId || !request.timestamp)) {
-      throw new RenewableServiceError(
-        "KAGGLE_REQUEST_REQUIRED",
-        isAnomaliesOnly
-          ? "Kaggle anomaly queries require start and end timestamps."
-          : "Kaggle renewable status queries require assetId and timestamp.",
-        400,
-      );
-    }
     const path = isAnomaliesOnly ? "/status/anomalies" : "/status";
     const params = new URLSearchParams();
     for (const [key, value] of Object.entries(request)) {
       if (key !== "anomaliesOnly" && value !== undefined) params.set(key, value);
     }
+
     const url = `${this.config.services.renewableUrl}${path}?${params.toString()}`;
     try {
       const resp = await fetch(url, { signal: AbortSignal.timeout(2000) });
@@ -139,7 +94,7 @@ export class ServiceClient {
       logger.warn("Kaggle renewable service unavailable", { reason: error });
       throw new RenewableServiceError(
         "KAGGLE_RENEWABLE_UNAVAILABLE",
-        "Kaggle renewable service could not be reached.",
+        "Kaggle renewable telemetry service could not be reached.",
         503,
       );
     }
@@ -160,56 +115,22 @@ export class ServiceClient {
       if (resp.ok) {
         return (await resp.json()) as OptimizationResult;
       }
-    } catch {
-      logger.debug("Downstream optimization service unavailable, generating verified contract result", { scenarioId: input.scenarioId });
+      throw new ServiceError("OPTIMIZATION_SERVICE_ERROR", `Optimization solver service returned HTTP ${resp.status}`, resp.status >= 500 ? 503 : resp.status);
+    } catch (error) {
+      if (error instanceof ServiceError) throw error;
+      logger.warn("Downstream optimization solver service unavailable", { scenarioId: input.scenarioId, reason: error });
+      throw new ServiceError("OPTIMIZATION_UNAVAILABLE", `Grid optimization solver service could not be reached for scenario ${input.scenarioId}`, 503);
     }
-
-    // Verified mathematical baseline dispatch conforming to OptimizationResult contract
-    const netLoad = (input.demandForecast.points[0]?.demandMw || 85.0) - input.renewableForecastMw;
-    const batteryDischargeMw = Math.min(
-      input.batteryConstraints.maxDischargePowerMw,
-      Math.max(10.0, netLoad * 0.25)
-    );
-
-    const beforeStress = input.currentGridState.gridStressIndex;
-    const afterStress = Math.max(0.15, beforeStress - (batteryDischargeMw > 0 ? 0.25 : 0.05));
-
-    return {
-      scenarioId: input.scenarioId,
-      status: "feasible",
-      solverStatus: "optimal",
-      actions: batteryDischargeMw > 0
-        ? [
-            {
-              resourceId: "BESS_SUB_01",
-              actionType: "battery_discharge",
-              powerMw: Math.round(batteryDischargeMw * 10) / 10,
-              startTime: input.targetTimestamp,
-              endTime: new Date(Date.parse(input.targetTimestamp) + 15 * 60 * 1000).toISOString(),
-            },
-          ]
-        : [],
-      before: {
-        demandMw: input.currentGridState.demandMw,
-        renewableMw: input.currentGridState.solarGenerationMw + input.currentGridState.windGenerationMw,
-        curtailmentMw: input.currentGridState.curtailmentMw,
-        gridStressIndex: beforeStress,
-      },
-      after: {
-        demandMw: input.currentGridState.demandMw,
-        renewableMw: input.currentGridState.solarGenerationMw + input.currentGridState.windGenerationMw,
-        curtailmentMw: 0.0,
-        gridStressIndex: afterStress,
-      },
-      objectiveValue: 42.5,
-      solveDurationMs: 45,
-    };
   }
 
   /**
-   * Replay deterministic scenario (e.g. DEMAND_SPIKE_PLUS_RENEWABLE_DROP)
+   * Replay scenario using actual downstream model & optimization services.
+   * Defines INPUT CONDITIONS only, passing them through the real analytical pipeline.
    */
   async replayScenario(scenarioId: string): Promise<{ scenario: Scenario; result: OptimizationResult }> {
+    const zoneId = "NL_LIANDER_SUB_01";
+    const targetTimestamp = new Date().toISOString();
+
     const scenario: Scenario = {
       scenarioId,
       name: "Deterministic Demand Surge + Solar Drop Replay",
@@ -220,13 +141,13 @@ export class ServiceClient {
           timestampOffsetMinutes: 15,
           eventType: "demand_spike",
           severity: 0.18,
-          assetOrZoneId: "NL_LIANDER_SUB_01",
+          assetOrZoneId: zoneId,
         },
         {
           timestampOffsetMinutes: 15,
           eventType: "solar_drop",
           severity: 0.55,
-          assetOrZoneId: "SOLAR_FARM_ZEELAND_03",
+          assetOrZoneId: "solar_park_synth_01",
         },
       ],
       expectedOutcome: {
@@ -236,43 +157,44 @@ export class ServiceClient {
       },
     };
 
-    const optResult: OptimizationResult = {
+    // Gather live predictions & measurements from real domain services
+    const currentGridState = await this.getGridState(zoneId);
+    const demandForecast = await this.getDemandForecast(zoneId, 15);
+    const renewableStatuses = await this.getRenewableStatuses();
+
+    const renewableForecastMw = renewableStatuses.reduce(
+      (acc, s) => acc + (s.expectedMw ?? s.actualMw ?? 0),
+      0
+    );
+
+    const input: OptimizationInput = {
       scenarioId,
-      status: "feasible",
-      solverStatus: "optimal",
-      actions: [
-        {
-          resourceId: "BESS_SUB_01",
-          actionType: "battery_discharge",
-          powerMw: 15.0,
-          startTime: "2024-06-12T14:15:00.000Z",
-          endTime: "2024-06-12T14:30:00.000Z",
-        },
-        {
-          resourceId: "FLEX_LOAD_IND_PARK",
-          actionType: "shift_flexible_load",
-          powerMw: 8.0,
-          startTime: "2024-06-12T14:15:00.000Z",
-          endTime: "2024-06-12T14:45:00.000Z",
-        },
-      ],
-      before: {
-        demandMw: 98.0,
-        renewableMw: 19.0,
-        curtailmentMw: 0.0,
-        gridStressIndex: 0.89,
+      targetTimestamp,
+      horizonMinutes: 15,
+      currentGridState,
+      demandForecast,
+      renewableForecastMw,
+      batteryConstraints: {
+        maxCapacityMwh: 40.0,
+        currentSocPercent: 50.0,
+        minSocPercent: 10.0,
+        maxSocPercent: 90.0,
+        maxChargePowerMw: 20.0,
+        maxDischargePowerMw: 20.0,
+        roundTripEfficiency: 0.92,
       },
-      after: {
-        demandMw: 90.0,
-        renewableMw: 19.0,
-        curtailmentMw: 0.0,
-        gridStressIndex: 0.42,
+      flexibleLoadConstraints: {
+        totalFlexibleMw: 10.0,
+        maxShiftDurationMinutes: 60,
+        shiftCostPerMw: 25.0,
       },
-      objectiveValue: 138.4,
-      solveDurationMs: 42,
+      curtailmentPenaltyPerMw: 100.0,
     };
 
-    return { scenario, result: optResult };
+    // Solve via downstream OR-Tools MILP optimizer
+    const result = await this.solveOptimization(input);
+
+    return { scenario, result };
   }
 
   /**
@@ -289,6 +211,25 @@ export class ServiceClient {
     });
 
     return { briefMarkdown: response.text };
+  }
+}
+
+export class ServiceError extends Error {
+  readonly code: string;
+  readonly statusCode: number;
+  readonly details?: string;
+
+  constructor(
+    code: string,
+    message: string,
+    statusCode: number,
+    details?: string,
+  ) {
+    super(message);
+    this.name = "ServiceError";
+    this.code = code;
+    this.statusCode = statusCode;
+    this.details = details;
   }
 }
 

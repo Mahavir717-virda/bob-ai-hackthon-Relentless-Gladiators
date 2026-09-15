@@ -6,6 +6,7 @@ import { OperatorBriefGenerator } from "../../agent/orchestration/operator-brief
 import type { OperatorBriefInput } from "../../shared/contracts/OperatorBrief.ts";
 import { validateOperatorBrief } from "../../shared/contracts/OperatorBrief.ts";
 import { createApiServer } from "../../apps/api/src/server.ts";
+import { ServiceClient } from "../../apps/api/src/service-client.ts";
 import { loadConfig } from "../../apps/api/src/config.ts";
 
 import { resetLLMProvider, getLLMProvider, MockLLMProvider } from "../../agent/provider/index.ts";
@@ -158,7 +159,8 @@ test("Operator Brief Generator Suite", async (t) => {
 
   await t.test("API Gateway /api/agent/brief returns validated OperatorBrief", async () => {
     const config = loadConfig();
-    const server = createApiServer({ config });
+    const customServiceClient = new ServiceClient(config);
+    const server = createApiServer({ config, serviceClient: customServiceClient });
 
     await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
     const port = (server.address() as AddressInfo).port;
