@@ -521,7 +521,7 @@ Implement demand lag features.
 
 Prompt:
 <exact Bob prompt>
-
+ 
 Bob changed:
 services/forecasting/features.py
 tests/forecasting/test_features.py
