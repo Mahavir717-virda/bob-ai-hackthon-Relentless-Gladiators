@@ -41,6 +41,7 @@ class KaggleRenewableServiceError(ValueError):
 
 
 _SOURCE_CACHE: dict[Path, pd.DataFrame] = {}
+_FRAME_CACHE: dict[Any, pd.DataFrame] = {}
 _SCHEMA_CACHE: dict[Path, Any] = {}
 _FORECAST_CACHE: dict[Path, Any] = {}
 _ANOMALY_CACHE: dict[Path, dict[str, Any]] = {}
@@ -50,6 +51,7 @@ _ROOT_CAUSE_CACHE: dict[str, dict[str, Any]] = {}
 def clear_kaggle_service_cache() -> None:
     """Clear process-local data/model caches, primarily for tests."""
     _SOURCE_CACHE.clear()
+    _FRAME_CACHE.clear()
     _SCHEMA_CACHE.clear()
     _FORECAST_CACHE.clear()
     _ANOMALY_CACHE.clear()
@@ -133,10 +135,10 @@ def _build_asset_frame(asset_id: str, dataset_dir: Path, forecast_dir: Path) -> 
 
 
 def _asset_frame(asset_id: str, dataset_dir: Path, forecast_dir: Path) -> pd.DataFrame:
-    key = (dataset_dir / f"{asset_id}::{forecast_dir}")
-    if key not in _SOURCE_CACHE:
-        _SOURCE_CACHE[key] = _build_asset_frame(asset_id, dataset_dir, forecast_dir)
-    return _SOURCE_CACHE[key]
+    key = f"{asset_id}::{dataset_dir}::{forecast_dir}"
+    if key not in _FRAME_CACHE:
+        _FRAME_CACHE[key] = _build_asset_frame(asset_id, dataset_dir, forecast_dir)
+    return _FRAME_CACHE[key]
 
 
 def _anomaly_row(row: pd.Series, anomaly_dir: Path) -> pd.Series:
