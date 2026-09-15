@@ -1,6 +1,6 @@
 import React from "react";
 import {
-  LayoutDashboard,
+  Radio,
   TrendingUp,
   Sun,
   Zap,
@@ -31,7 +31,7 @@ export const Navigation: React.FC<NavigationProps> = ({
     {
       id: "command_center" as NavPageId,
       label: "Command Center",
-      icon: LayoutDashboard,
+      icon: Radio,
     },
     {
       id: "demand_forecast" as NavPageId,
@@ -43,7 +43,7 @@ export const Navigation: React.FC<NavigationProps> = ({
       label: "Renewable Assets",
       icon: Sun,
       badge: anomaliesCount > 0 ? `${anomaliesCount} alert` : undefined,
-      badgeColor: "bg-amber-500/20 text-amber-300 border-amber-500/40",
+      badgeColor: "bg-spectrum-amber/15 text-spectrum-amber border-spectrum-amber/30",
     },
     {
       id: "optimization_center" as NavPageId,
@@ -55,7 +55,7 @@ export const Navigation: React.FC<NavigationProps> = ({
       label: "AI Copilot",
       icon: Bot,
       badge: "Bob MCP",
-      badgeColor: "bg-indigo-500/20 text-indigo-300 border-indigo-500/40",
+      badgeColor: "bg-spectrum-tech/15 text-spectrum-tech border-spectrum-tech/30",
     },
     {
       id: "scenario_simulator" as NavPageId,
@@ -65,7 +65,7 @@ export const Navigation: React.FC<NavigationProps> = ({
   ];
 
   return (
-    <nav className="border-b border-slate-800/80 bg-slate-950/60 px-6 backdrop-blur-md">
+    <nav className="border-b border-border bg-surface-muted/60 px-6 backdrop-blur-md transition-colors duration-200">
       <div className="flex gap-1 overflow-x-auto py-2">
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -74,20 +74,24 @@ export const Navigation: React.FC<NavigationProps> = ({
             <button
               key={item.id}
               onClick={() => onPageSelect(item.id)}
-              className={`flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold transition whitespace-nowrap ${
+              className={`relative flex items-center gap-2 rounded-md px-3.5 py-2 text-xs font-semibold transition-fast whitespace-nowrap ${
                 isActive
-                  ? "bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 shadow-sm"
-                  : "text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 border border-transparent"
+                  ? "bg-copper-subtle text-copper border border-copper/30 shadow-sm"
+                  : "text-secondary hover:bg-surface hover:text-primary border border-transparent"
               }`}
             >
-              <Icon className={`h-4 w-4 ${isActive ? "text-cyan-400" : "text-slate-400"}`} />
+              <Icon className={`h-4 w-4 ${isActive ? "text-copper" : "text-tertiary"}`} />
               <span>{item.label}</span>
               {item.badge && (
                 <span
-                  className={`rounded px-1.5 py-0.2 text-[10px] font-mono border ${item.badgeColor}`}
+                  className={`rounded px-1.5 py-0.5 text-[10px] font-mono border ${item.badgeColor}`}
                 >
                   {item.badge}
                 </span>
+              )}
+              {/* Active Bottom Copper Indicator Line */}
+              {isActive && (
+                <span className="absolute bottom-0 left-2 right-2 h-[2px] bg-copper rounded-full" />
               )}
             </button>
           );

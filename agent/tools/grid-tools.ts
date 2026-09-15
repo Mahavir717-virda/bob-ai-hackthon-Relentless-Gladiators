@@ -20,6 +20,7 @@ import type { DemandForecast } from "../../shared/contracts/DemandForecast.ts";
 import type { RenewableStatus, RenewableRootCause } from "../../shared/contracts/RenewableStatus.ts";
 import type { WeatherData } from "../../shared/contracts/WeatherData.ts";
 import type { OptimizationResult } from "../../shared/contracts/OptimizationResult.ts";
+import { buildOptimizationInputFromRenewables } from "../../apps/api/src/services/adapters/renewable-optimization-adapter.ts";
 
 export class GridTools {
   private serviceClient: ServiceClient;
@@ -295,30 +296,43 @@ export class GridTools {
         const scenarioId = args?.scenarioId || "COPILOT_RUN_01";
         const gridState = await this.serviceClient.getGridState();
         const demandForecast = await this.serviceClient.getDemandForecast(gridState.zoneId, 15);
+        let renewableStatuses: RenewableStatus[] = [];
+        if (typeof this.serviceClient.getRenewableStatuses === "function") {
+          try {
+            renewableStatuses = await this.serviceClient.getRenewableStatuses();
+          } catch {
+            renewableStatuses = [];
+          }
+        }
+        if (!renewableStatuses || renewableStatuses.length === 0) {
+          renewableStatuses = [
+            {
+              assetId: "SOLAR_SYSTEM",
+              assetType: "solar",
+              timestamp: gridState.timestamp || new Date().toISOString(),
+              expectedMw: gridState.solarGenerationMw || 0,
+              actualMw: gridState.solarGenerationMw || 0,
+              performanceRatio: 1.0,
+              anomaly: false,
+            },
+            {
+              assetId: "WIND_SYSTEM",
+              assetType: "wind",
+              timestamp: gridState.timestamp || new Date().toISOString(),
+              expectedMw: gridState.windGenerationMw || 0,
+              actualMw: gridState.windGenerationMw || 0,
+              performanceRatio: 1.0,
+              anomaly: false,
+            },
+          ];
+        }
 
-        const optInput = {
-          scenarioId,
-          targetTimestamp: demandForecast.points[0]?.timestamp || new Date().toISOString(),
-          horizonMinutes: 15,
-          currentGridState: gridState,
+        const optInput = buildOptimizationInputFromRenewables(
+          renewableStatuses,
+          gridState,
           demandForecast,
-          renewableForecastMw: 45.0,
-          batteryConstraints: {
-            maxCapacityMwh: 40.0,
-            currentSocPercent: gridState.batterySocPercent,
-            minSocPercent: 10.0,
-            maxSocPercent: 90.0,
-            maxChargePowerMw: 20.0,
-            maxDischargePowerMw: 20.0,
-            roundTripEfficiency: 0.90,
-          },
-          flexibleLoadConstraints: {
-            totalFlexibleMw: 10.0,
-            maxShiftDurationMinutes: 60,
-            shiftCostPerMw: 15.0,
-          },
-          curtailmentPenaltyPerMw: 50.0,
-        };
+          { scenarioId }
+        );
 
         const result = await this.serviceClient.solveOptimization(optInput);
         return {

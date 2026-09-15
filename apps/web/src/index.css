@@ -2,9 +2,67 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* Light Mode (Parchment Theme) */
+  --bg-canvas: #F5F1E8;          /* Parchment canvas background */
+  --bg-surface: #FFFFFF;         /* Crisp white cards & modals */
+  --bg-surface-muted: #E8E2D4;   /* Bone: subtle section background / disabled states */
+  --border-default: #DCD5C4;     /* Warm hairline borders & table dividers */
+  --text-primary: #3A3733;       /* Warm Graphite body text & headings */
+  --text-secondary: #726C60;     /* Muted metadata & captions */
+  --text-tertiary: #A39C8C;      /* Disabled text & placeholders */
+  
+  /* Brand Accent */
+  --accent-copper: #B5622E;        /* Primary Signal Copper action color */
+  --accent-copper-hover: #9C5227;  /* Hover / active pressed copper */
+  --accent-copper-subtle: #F0DDCB; /* Tinted background under copper elements */
+
+  /* Skeleton Loading */
+  --skeleton-base: #E8E2D4;
+  --skeleton-shimmer: #F5F1E8;
+
+  /* Functional Semantics */
+  --color-error: #B23A2E;        /* Rust Red */
+  --color-warning: #C98A2E;      /* Amber Gold */
+  --color-success: #3F7A54;      /* Deep Moss Green */
+
+  /* Corner Radii */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+}
+
+[data-theme="dark"], .dark {
+  /* Dark Mode (Pine Ink Theme) */
+  --bg-canvas: #0F1613;          /* Deep Pine Ink background */
+  --bg-surface: #161E1A;         /* Dark Ink Green cards & modals */
+  --bg-surface-muted: #1E2721;   /* Muted Pine section background */
+  --border-default: #2A342D;     /* Dark hairline borders */
+  --text-primary: #EDE8DA;       /* Cream Parchment body & headings */
+  --text-secondary: #9BA39A;     /* Muted Sage captions */
+  --text-tertiary: #5E6960;      /* Deep Slate Green disabled text */
+  
+  /* Brand Accent Dark */
+  --accent-copper: #B5622E;        /* Copper remains constant for brand identity */
+  --accent-copper-hover: #9C5227;
+  --accent-copper-subtle: #3B2A1D; /* Warm dark brown tint */
+
+  /* Skeleton Loading Dark */
+  --skeleton-base: #1E2721;
+  --skeleton-shimmer: #2A342D;
+
+  /* Functional Semantics */
+  --color-error: #B23A2E;
+  --color-warning: #C98A2E;
+  --color-success: #3F7A54;
+}
+
 @layer base {
   body {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
   }
 
   code, pre, .font-mono {
@@ -12,30 +70,78 @@
   }
 }
 
-/* Custom scrollbar for control room telemetry panels */
+/* Numerals & Metrics (Tactile "Printed Ticket" Style) */
+.font-metric {
+  font-family: 'Fraunces', 'Roboto Slab', Georgia, serif;
+  font-feature-settings: 'tnum' 1, 'zero' 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Interactive Focus Ring */
+*:focus-visible {
+  outline: 2px solid var(--accent-copper) !important;
+  outline-offset: 2px !important;
+}
+
+/* 1300ms Linear Shimmer Sweep */
+@keyframes skeleton-sweep {
+  0%   { background-position: -150% 0; }
+  100% { background-position: 150% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--skeleton-base) 25%,
+    var(--skeleton-shimmer) 50%,
+    var(--skeleton-base) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-sweep 1300ms linear infinite;
+  border-radius: inherit;
+}
+
+/* Live Voice / Telemetry Pulse Animation */
+@keyframes voice-pulse {
+  0%   { transform: scale(1); opacity: 0.5; }
+  50%  { transform: scale(1.08); opacity: 0.15; }
+  100% { transform: scale(1); opacity: 0.5; }
+}
+
+.animate-voice-pulse {
+  animation: voice-pulse 1800ms ease-in-out infinite;
+}
+
+/* Motion Curve Utility Classes */
+.transition-instant { transition-duration: 100ms; transition-timing-function: ease-out; }
+.transition-fast { transition-duration: 180ms; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); }
+.transition-base { transition-duration: 250ms; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); }
+.transition-slow { transition-duration: 400ms; transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1); }
+.transition-deliberate { transition-duration: 600ms; transition-timing-function: ease-in-out; }
+
+/* Custom scrollbars for control room telemetry panels */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #090d16;
+  background: var(--bg-canvas);
 }
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: var(--border-default);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: var(--text-tertiary);
 }
 
-.glass-panel {
-  background: rgba(17, 24, 39, 0.7);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+/* Radio Panel / Glass Styling */
+.signal-panel {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
 }
 
-.glass-panel-accent {
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(56, 189, 248, 0.2);
+.signal-panel-muted {
+  background: var(--bg-surface-muted);
+  border: 1px solid var(--border-default);
 }

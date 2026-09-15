@@ -10,6 +10,7 @@ export interface MetricCardProps {
   subtitle?: string;
   icon?: LucideIcon;
   status?: "nominal" | "warning" | "critical";
+  loading?: boolean;
 }
 
 export const MetricCard: React.FC<MetricCardProps> = ({
@@ -21,56 +22,54 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   subtitle,
   icon: Icon,
   status = "nominal",
+  loading = false,
 }) => {
   const statusBorder =
     status === "critical"
-      ? "border-rose-500/40 hover:border-rose-500/70"
+      ? "border-semantic-error/40 hover:border-semantic-error/70"
       : status === "warning"
-      ? "border-amber-500/40 hover:border-amber-500/70"
-      : "border-slate-800/80 hover:border-cyan-500/40";
-
-  const statusGlow =
-    status === "critical"
-      ? "from-rose-950/20"
-      : status === "warning"
-      ? "from-amber-950/20"
-      : "from-cyan-950/15";
+      ? "border-semantic-warning/40 hover:border-semantic-warning/70"
+      : "border-border hover:border-copper/40";
 
   return (
     <div
-      className={`glass-panel relative overflow-hidden rounded-xl p-5 transition-all duration-300 hover:shadow-lg bg-gradient-to-b ${statusGlow} to-transparent border ${statusBorder}`}
+      className={`relative overflow-hidden rounded-md p-5 bg-surface border ${statusBorder} transition-fast shadow-sm`}
     >
       <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold tracking-wider text-slate-400 uppercase">
+        <span className="text-xs font-medium text-secondary">
           {title}
         </span>
         {Icon && (
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-800/80 text-cyan-400">
+          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-surface-muted text-copper border border-border">
             <Icon className="h-4 w-4" />
           </div>
         )}
       </div>
 
       <div className="mt-3 flex items-baseline gap-2">
-        <span className="text-2xl font-bold tracking-tight text-white font-mono">
-          {value}
-        </span>
-        {unit && <span className="text-sm font-medium text-slate-400">{unit}</span>}
+        {loading ? (
+          <div className="h-9 w-28 skeleton rounded" />
+        ) : (
+          <span className="font-metric text-3xl font-semibold tracking-tight text-primary">
+            {value}
+          </span>
+        )}
+        {unit && !loading && <span className="text-xs font-medium text-secondary">{unit}</span>}
       </div>
 
       {(change || subtitle) && (
-        <div className="mt-2 flex items-center justify-between text-xs">
-          {subtitle && <span className="text-slate-400">{subtitle}</span>}
+        <div className="mt-2.5 flex items-center justify-between text-xs">
+          {subtitle && <span className="text-secondary">{subtitle}</span>}
           {change && (
             <span
-              className={`font-semibold ${
+              className={`font-semibold font-metric ${
                 changeType === "positive"
-                  ? "text-emerald-400"
+                  ? "text-semantic-success"
                   : changeType === "negative"
-                  ? "text-rose-400"
+                  ? "text-semantic-error"
                   : changeType === "warning"
-                  ? "text-amber-400"
-                  : "text-slate-400"
+                  ? "text-semantic-warning"
+                  : "text-secondary"
               }`}
             >
               {change}
