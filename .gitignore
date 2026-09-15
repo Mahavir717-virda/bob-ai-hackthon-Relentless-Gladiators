@@ -116,7 +116,10 @@ ml/datasets/kaggle_power_system/
 ml/datasets/liander2024/
 ml/models/renewable/artifacts/
 
-# Documentation and the small deployment model intentionally kept in Git
+# Documentation and deployable renewable artifacts intentionally kept in Git
 !docs/data/
 !docs/data/**
 !ml/models/renewable/wind_lgbm_wind_park_synth_01.pkl
+!ml/models/renewable/solar_lgbm_solar_park_synth_01.pkl
+!ml/models/renewable/root_cause_xgb_solar.pkl
+!ml/models/renewable/root_cause_xgb_wind.pkl

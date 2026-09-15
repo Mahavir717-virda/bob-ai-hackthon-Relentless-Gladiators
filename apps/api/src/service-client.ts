@@ -99,39 +99,50 @@ export class ServiceClient {
   /**
    * Delegate to services/renewable for solar/wind performance and anomaly detection
    */
-  async getRenewableStatuses(): Promise<RenewableStatus[]> {
-    const url = `${this.config.services.renewableUrl}/status`;
+  async getRenewableStatuses(request: {
+    assetId?: string;
+    timestamp?: string;
+    start?: string;
+    end?: string;
+    anomaliesOnly?: boolean;
+  } = {}): Promise<RenewableStatus[]> {
+    const isAnomaliesOnly = request.anomaliesOnly === true;
+    if (isAnomaliesOnly ? (!request.start || !request.end) : (!request.assetId || !request.timestamp)) {
+      throw new RenewableServiceError(
+        "KAGGLE_REQUEST_REQUIRED",
+        isAnomaliesOnly
+          ? "Kaggle anomaly queries require start and end timestamps."
+          : "Kaggle renewable status queries require assetId and timestamp.",
+        400,
+      );
+    }
+    const path = isAnomaliesOnly ? "/status/anomalies" : "/status";
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(request)) {
+      if (key !== "anomaliesOnly" && value !== undefined) params.set(key, value);
+    }
+    const url = `${this.config.services.renewableUrl}${path}?${params.toString()}`;
     try {
       const resp = await fetch(url, { signal: AbortSignal.timeout(2000) });
       if (resp.ok) {
         return (await resp.json()) as RenewableStatus[];
       }
-    } catch {
-      logger.debug("Downstream renewable service unavailable, using operational telemetry");
+      const detail = await resp.text();
+      throw new RenewableServiceError(
+        "KAGGLE_RENEWABLE_UNAVAILABLE",
+        `Kaggle renewable service returned HTTP ${resp.status}.`,
+        resp.status >= 500 ? 503 : resp.status,
+        detail || undefined,
+      );
+    } catch (error) {
+      if (error instanceof RenewableServiceError) throw error;
+      logger.warn("Kaggle renewable service unavailable", { reason: error });
+      throw new RenewableServiceError(
+        "KAGGLE_RENEWABLE_UNAVAILABLE",
+        "Kaggle renewable service could not be reached.",
+        503,
+      );
     }
-
-    return [
-      {
-        assetId: "SOLAR_FARM_ZEELAND_03",
-        assetType: "solar",
-        timestamp: new Date().toISOString(),
-        expectedMw: 42.0,
-        actualMw: 38.5,
-        performanceRatio: 0.916,
-        anomaly: false,
-        anomalyScore: 0.12,
-      },
-      {
-        assetId: "WIND_CLUSTER_NOORD_01",
-        assetType: "wind",
-        timestamp: new Date().toISOString(),
-        expectedMw: 25.0,
-        actualMw: 24.2,
-        performanceRatio: 0.968,
-        anomaly: false,
-        anomalyScore: 0.08,
-      },
-    ];
   }
 
   /**
@@ -278,6 +289,25 @@ export class ServiceClient {
     });
 
     return { briefMarkdown: response.text };
+  }
+}
+
+export class RenewableServiceError extends Error {
+  readonly code: string;
+  readonly statusCode: number;
+  readonly details?: string;
+
+  constructor(
+    code: string,
+    message: string,
+    statusCode: number,
+    details?: string,
+  ) {
+    super(message);
+    this.name = "RenewableServiceError";
+    this.code = code;
+    this.statusCode = statusCode;
+    this.details = details;
   }
 }
 

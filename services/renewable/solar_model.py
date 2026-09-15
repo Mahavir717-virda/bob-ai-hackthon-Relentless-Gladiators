@@ -143,15 +143,20 @@ def train_solar_model(
 
     # 7. Save metadata
     metadata = {
+        "model_name": f"solar_lgbm_{safe_name}",
         "model_type": "LightGBM",
+        "algorithm": "LightGBM",
         "task": "solar_generation_forecast",
         "asset_name": asset_name,
         "version": SOLAR_MODEL_VERSION,
         "trained_at": datetime.now(timezone.utc).isoformat(),
         "features": feat_cols,
         "target": target_col,
+        "prediction_interval": "15min",
         "n_train_rows": int(len(X_train)),
         "n_val_rows": int(len(X_val)),
+        "training_rows": int(len(X_train)),
+        "validation_rows": int(len(X_val)),
         "train_period": {
             "start": str(X_train.index.min()),
             "end":   str(X_train.index.max()),
@@ -161,6 +166,9 @@ def train_solar_model(
             "end":   str(X_val.index.max()),
         },
         "lgb_params": params,
+        "hyperparameters": params,
+        "artifact_path": str(model_path),
+        "artifact_format": "joblib/pickle",
         "best_iteration": int(model.best_iteration_) if hasattr(model, "best_iteration_") else params["n_estimators"],
         "validation_metrics": metrics,
         "top_10_features_by_importance": top_features,
