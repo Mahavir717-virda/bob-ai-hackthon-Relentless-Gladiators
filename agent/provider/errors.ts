@@ -38,3 +38,17 @@ export class GroundTruthViolationError extends LLMError {
     this.name = "GroundTruthViolationError";
   }
 }
+
+export class OllamaError extends LLMError {
+  constructor(message: string, statusCode = 502, details?: unknown) {
+    super(message, "OLLAMA_ERROR", statusCode, details);
+    this.name = "OllamaError";
+  }
+}
+
+export class OllamaTimeoutError extends LLMError {
+  constructor(timeoutMs: number) {
+    super(`Ollama request timed out after ${timeoutMs}ms`, "OLLAMA_TIMEOUT", 504);
+    this.name = "OllamaTimeoutError";
+  }
+}

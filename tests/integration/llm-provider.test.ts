@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import {
   MockLLMProvider,
   WatsonxProvider,
+  OllamaProvider,
   getLLMProvider,
   resetLLMProvider,
   WatsonxAuthError,
@@ -136,5 +137,12 @@ test("LLM Provider Abstraction Suite", async (t) => {
     const custom = new MockLLMProvider("custom-granite-test");
     const active = getLLMProvider(custom);
     assert.equal(active.getModelId(), "custom-granite-test");
+  });
+
+  await t.test("OllamaProvider conforms to LLMProvider interface", () => {
+    const provider = new OllamaProvider({ modelId: "qwen2.5:1.5b" });
+    assert.equal(provider.getProviderName(), "ollama");
+    assert.equal(provider.getModelId(), "qwen2.5:1.5b");
+    assert.equal(provider.isConfigured(), true);
   });
 });
