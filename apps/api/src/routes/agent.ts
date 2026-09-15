@@ -3,6 +3,7 @@ import type { RequestContext } from "../types.ts";
 import type { ServiceClient } from "../service-client.ts";
 import { validateAgentContext } from "../../../../shared/contracts/AgentContext.ts";
 import { OperatorBriefGenerator } from "../../../../agent/orchestration/operator-brief-generator.ts";
+import { OperatorCopilot } from "../../../../agent/orchestration/operator-copilot.ts";
 import type { OperatorBriefInput } from "../../../../shared/contracts/OperatorBrief.ts";
 
 export async function handleAgent(
@@ -19,6 +20,51 @@ export async function handleAgent(
         requestId: ctx.requestId,
         timestamp: new Date().toISOString(),
         error: { code: "METHOD_NOT_ALLOWED", message: `Method ${ctx.method} not allowed` },
+      })
+    );
+    return;
+  }
+
+  // Specialized Route: /api/agent/copilot — Interactive copilot with tool orchestration & optimizer guardrails
+  if (ctx.url.pathname.endsWith("/copilot")) {
+    if (!body || typeof body !== "object" || typeof body.query !== "string") {
+      res.writeHead(400, {
+        "Content-Type": "application/json",
+        "X-Request-ID": ctx.requestId,
+      });
+      res.end(
+        JSON.stringify({
+          success: false,
+          requestId: ctx.requestId,
+          timestamp: new Date().toISOString(),
+          error: {
+            code: "INVALID_COPILOT_INPUT",
+            message: "Request payload must contain a 'query' string",
+          },
+        })
+      );
+      return;
+    }
+
+    const copilot = new OperatorCopilot(serviceClient);
+    const result = await copilot.processQuery({
+      query: body.query,
+      zoneId: body.zoneId,
+      assetId: body.assetId,
+      explicitTools: body.explicitTools,
+      simulationArgs: body.simulationArgs,
+    });
+
+    res.writeHead(200, {
+      "Content-Type": "application/json",
+      "X-Request-ID": ctx.requestId,
+    });
+    res.end(
+      JSON.stringify({
+        success: true,
+        requestId: ctx.requestId,
+        timestamp: new Date().toISOString(),
+        data: result,
       })
     );
     return;
