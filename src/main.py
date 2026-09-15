@@ -1,3 +1,4 @@
+
 """
 GridPilot AI - Main Application Gateway (FastAPI)
 Provides unified REST endpoints for grid state, forecasts, renewables, optimization, and operator briefs.

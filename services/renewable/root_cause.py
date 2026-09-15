@@ -143,11 +143,12 @@ def train_root_cause_model(
     split = max(1, int(len(rows) * (1 - VALIDATION_FRACTION)))
     if split >= len(rows):
         split = len(rows) - 1
-    model = XGBRegressor(
-        objective="reg:squarederror", n_estimators=160, max_depth=3,
-        learning_rate=0.05, subsample=0.9, colsample_bytree=0.9,
-        random_state=RANDOM_SEED, n_jobs=1,
-    )
+    model_params = {
+        "objective": "reg:squarederror", "n_estimators": 160, "max_depth": 3,
+        "learning_rate": 0.05, "subsample": 0.9, "colsample_bytree": 0.9,
+        "random_state": RANDOM_SEED, "n_jobs": 1,
+    }
+    model = XGBRegressor(**model_params)
     model.fit(features.iloc[:split], target.iloc[:split])
     predictions = model.predict(features.iloc[split:])
     metrics = {
@@ -158,10 +159,14 @@ def train_root_cause_model(
     _BUNDLES[asset_type] = bundle
 
     metadata = {
-        "model_type": "XGBoostRegressor", "task": "percentage_deviation_association",
+        "model_name": f"root_cause_xgb_{asset_type}",
+        "model_type": "XGBoostRegressor", "algorithm": "XGBoost",
+        "task": "percentage_deviation_association",
         "asset_type": asset_type, "version": ROOT_CAUSE_MODEL_VERSION,
         "trained_at": datetime.now(timezone.utc).isoformat(), "features": bundle.feature_columns,
         "target": "percentage_deviation", "n_train_rows": split, "n_val_rows": len(rows) - split,
+        "training_rows": split, "validation_rows": len(rows) - split,
+        "hyperparameters": model_params,
         "train_period": {"start": str(rows.iloc[0].timestamp), "end": str(rows.iloc[split - 1].timestamp)},
         "val_period": {"start": str(rows.iloc[split].timestamp), "end": str(rows.iloc[-1].timestamp)},
         "validation_metrics": metrics,
@@ -174,6 +179,7 @@ def train_root_cause_model(
         model_path = directory / f"root_cause_xgb_{asset_type}.pkl"
         metadata_path = directory / f"root_cause_xgb_{asset_type}_metadata.json"
         rows_path = directory / f"root_cause_xgb_{asset_type}_rows.parquet"
+        metadata.update({"artifact_path": str(model_path), "artifact_format": "joblib/pickle"})
         joblib.dump(model, model_path)
         metadata_path.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
         # Save the training rows so load_root_cause_model() can fully restore the bundle
