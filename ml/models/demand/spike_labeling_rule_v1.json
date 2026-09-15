@@ -1,0 +1,40 @@
+{
+  "rule_version": "spike-rule-v1",
+  "created_at": "2026-09-15T14:41:21.661472+00:00",
+  "model_version": "demand-spike-xgb-v1",
+  "derivation_split": "chronological_train_split_70pct",
+  "sample_size": 24594,
+  "lead_minutes": 15,
+  "denominator_stabilizer_mw": 0.1,
+  "growth_metric_formula": "((demand_{t+15m} - demand_t) / max(demand_t, 0.10 MW)) * 100",
+  "percentile_cutpoints": {
+    "moderate_percentile": 0.95,
+    "severe_percentile": 0.99
+  },
+  "thresholds": {
+    "moderate_spike_growth_pct_min": 133.6667,
+    "severe_spike_growth_pct_min": 366.6667,
+    "moderate_spike_mw_delta_min": 0.1667,
+    "severe_spike_mw_delta_min": 0.3733
+  },
+  "class_definitions": {
+    "0": {
+      "name": "normal",
+      "condition": "growth_pct < 133.67%",
+      "train_samples": 23364,
+      "train_prevalence_pct": 95.0
+    },
+    "1": {
+      "name": "moderate",
+      "condition": "133.67% <= growth_pct < 366.67%",
+      "train_samples": 983,
+      "train_prevalence_pct": 4.0
+    },
+    "2": {
+      "name": "severe",
+      "condition": "growth_pct >= 366.67%",
+      "train_samples": 247,
+      "train_prevalence_pct": 1.0
+    }
+  }
+}
