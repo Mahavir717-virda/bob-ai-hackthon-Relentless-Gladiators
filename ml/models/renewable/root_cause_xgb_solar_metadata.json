@@ -5,7 +5,7 @@
   "task": "percentage_deviation_association",
   "asset_type": "solar",
   "version": "1.0.0",
-  "trained_at": "2026-09-15T15:52:36.223723+00:00",
+  "trained_at": "2026-09-15T16:50:42.492241+00:00",
   "features": [
     "cloud_cover",
     "temperature_2m",
@@ -48,6 +48,6 @@
     "rmse_percentage_points": 0.0
   },
   "notes": "SHAP identifies associations in deviation predictions; it does not establish physical causation.",
-  "artifact_path": "C:\\Users\\Dell\\OneDrive\\Desktop\\IBM\\bob-ai-hackthon-Relentless-Gladiators\\ml\\models\\renewable\\root_cause_xgb_solar.pkl",
+  "artifact_path": "F:\\bob-ai-hackthon-Relentless-Gladiators\\ml\\models\\renewable\\root_cause_xgb_solar.pkl",
   "artifact_format": "joblib/pickle"
 }

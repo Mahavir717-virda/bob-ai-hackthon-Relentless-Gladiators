@@ -3,6 +3,7 @@ import type { RequestContext } from "../types.ts";
 import type { ServiceClient } from "../service-client.ts";
 import { validateOptimizationInput } from "../../../../shared/contracts/OptimizationInput.ts";
 import { validateOptimizationResult } from "../../../../shared/contracts/OptimizationResult.ts";
+import { buildOptimizationInputFromRenewables } from "../services/adapters/renewable-optimization-adapter.ts";
 
 
 export async function handleOptimization(
@@ -13,32 +14,17 @@ export async function handleOptimization(
 ): Promise<void> {
   if (ctx.method === "GET") {
     const defaultGrid = await serviceClient.getGridState();
-    const defaultForecast = await serviceClient.getDemandForecast("NL_LIANDER_SUB_01", 15);
-    const mockInput = {
-      scenarioId: "LATEST_SNAPSHOT",
-      targetTimestamp: defaultForecast.points[0].timestamp,
-      horizonMinutes: 15,
-      currentGridState: defaultGrid,
-      demandForecast: defaultForecast,
-      renewableForecastMw: 32.1 + 24.5,
-      batteryConstraints: {
-        maxCapacityMwh: 40.0,
-        currentSocPercent: 65.0,
-        minSocPercent: 10.0,
-        maxSocPercent: 90.0,
-        maxChargePowerMw: 20.0,
-        maxDischargePowerMw: 20.0,
-        roundTripEfficiency: 0.90,
-      },
-      flexibleLoadConstraints: {
-        totalFlexibleMw: 10.0,
-        maxShiftDurationMinutes: 60,
-        shiftCostPerMw: 15.0,
-      },
-      curtailmentPenaltyPerMw: 50.0,
-    };
+    const defaultForecast = await serviceClient.getDemandForecast(defaultGrid.zoneId || "NL_LIANDER_SUB_01", 15);
+    const renewableStatuses = await serviceClient.getRenewableStatuses();
 
-    const optResult = await serviceClient.solveOptimization(mockInput);
+    const dynamicInput = buildOptimizationInputFromRenewables(
+      renewableStatuses,
+      defaultGrid,
+      defaultForecast,
+      { scenarioId: "LATEST_SNAPSHOT" }
+    );
+
+    const optResult = await serviceClient.solveOptimization(dynamicInput);
     res.writeHead(200, {
       "Content-Type": "application/json",
       "X-Request-ID": ctx.requestId,

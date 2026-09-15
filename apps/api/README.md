@@ -17,4 +17,4 @@ The central backend gateway for GridPilot AI. Handles external client requests, 
 - `/api/agent` — Operator copilot interactions and automated brief generation
 
 ## MCP Server Integration
-Exposes MCP tools (`get_current_grid_state`, `get_demand_forecast`, `run_optimization`, etc.) for direct invocation by IBM Bob CLI and watsonx.ai.
+Exposes MCP tools (`get_current_grid_state`, `get_demand_forecast`, `run_optimization`, etc.) for direct invocation by IBM Bob CLI and local Qwen 2.5 LLM.

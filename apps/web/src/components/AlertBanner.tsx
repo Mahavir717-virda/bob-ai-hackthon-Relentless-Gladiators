@@ -20,47 +20,47 @@ export const AlertBanner: React.FC<AlertBannerProps> = ({
 }) => {
   const styles = {
     info: {
-      bg: "bg-cyan-950/30 border-cyan-500/40 text-cyan-200",
+      bg: "bg-spectrum-radar/10 border-spectrum-radar/30 text-primary",
       icon: Info,
-      iconColor: "text-cyan-400",
+      iconColor: "text-spectrum-radar",
     },
     success: {
-      bg: "bg-emerald-950/30 border-emerald-500/40 text-emerald-200",
+      bg: "bg-semantic-success/10 border-semantic-success/30 text-primary",
       icon: CheckCircle2,
-      iconColor: "text-emerald-400",
+      iconColor: "text-semantic-success",
     },
     warning: {
-      bg: "bg-amber-950/30 border-amber-500/40 text-amber-200",
+      bg: "bg-semantic-warning/10 border-semantic-warning/30 text-primary",
       icon: AlertTriangle,
-      iconColor: "text-amber-400",
+      iconColor: "text-semantic-warning",
     },
     critical: {
-      bg: "bg-rose-950/40 border-rose-500/60 text-rose-200",
+      bg: "bg-semantic-error/15 border-semantic-error/40 text-primary",
       icon: AlertCircle,
-      iconColor: "text-rose-400 animate-pulse",
+      iconColor: "text-semantic-error animate-pulse",
     },
   }[type];
 
   const IconComponent = styles.icon;
 
   return (
-    <div className={`flex items-start gap-3 rounded-xl border p-4 backdrop-blur-md ${styles.bg}`}>
+    <div className={`flex items-start gap-3 rounded-md border p-4 shadow-sm ${styles.bg}`}>
       <IconComponent className={`h-5 w-5 shrink-0 mt-0.5 ${styles.iconColor}`} />
       <div className="flex-1">
         <div className="flex items-center justify-between">
-          <h4 className="text-sm font-semibold tracking-wide text-white">{title}</h4>
+          <h4 className="text-xs font-bold tracking-wide text-primary">{title}</h4>
           {timestamp && (
-            <span className="text-xs font-mono text-slate-400">
+            <span className="text-xs font-metric text-secondary">
               {new Date(timestamp).toLocaleTimeString()}
             </span>
           )}
         </div>
-        <p className="mt-1 text-xs leading-relaxed text-slate-300">{message}</p>
+        <p className="mt-1 text-xs leading-relaxed text-secondary">{message}</p>
       </div>
       {actionText && onAction && (
         <button
           onClick={onAction}
-          className="shrink-0 rounded-lg bg-white/10 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-white/20 active:scale-95"
+          className="shrink-0 rounded-md bg-copper text-white hover:bg-copper-hover px-3 py-1.5 text-xs font-semibold shadow-sm transition-fast active:scale-95"
         >
           {actionText}
         </button>

@@ -5,7 +5,7 @@
   "task": "percentage_deviation_association",
   "asset_type": "wind",
   "version": "1.0.0",
-  "trained_at": "2026-09-15T15:52:35.988464+00:00",
+  "trained_at": "2026-09-15T16:50:42.168544+00:00",
   "features": [
     "cloud_cover",
     "temperature_2m",
@@ -46,10 +46,10 @@
     "end": "2026-01-01 14:45:00+00:00"
   },
   "validation_metrics": {
-    "mae_percentage_points": 0.10845343271891277,
-    "rmse_percentage_points": 0.15017566052770667
+    "mae_percentage_points": 0.018674214680989582,
+    "rmse_percentage_points": 0.02084455922631421
   },
   "notes": "SHAP identifies associations in deviation predictions; it does not establish physical causation.",
-  "artifact_path": "C:\\Users\\Dell\\OneDrive\\Desktop\\IBM\\bob-ai-hackthon-Relentless-Gladiators\\ml\\models\\renewable\\root_cause_xgb_wind.pkl",
+  "artifact_path": "F:\\bob-ai-hackthon-Relentless-Gladiators\\ml\\models\\renewable\\root_cause_xgb_wind.pkl",
   "artifact_format": "joblib/pickle"
 }

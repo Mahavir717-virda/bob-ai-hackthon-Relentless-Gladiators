@@ -1,0 +1,81 @@
+{
+  "metadata": {
+    "asset_id": "OS Edam",
+    "group_name": "mv_feeder",
+    "source_uri": "ml\\datasets\\raw\\mv_feeder\\OS Edam.parquet",
+    "execution_timestamp": "2026-09-15T11:57:46.580358+00:00",
+    "status": "SUCCESS",
+    "canonical_output_path": "ml\\datasets\\openstef_demand_clean.parquet"
+  },
+  "summary": {
+    "rows_in": 35136,
+    "rows_out": 35136,
+    "data_retention_pct": 100.0
+  },
+  "checks": {
+    "schema_validation": {
+      "is_valid": true,
+      "missing_required_columns": [],
+      "present_columns": [
+        "timestamp",
+        "load",
+        "available_at"
+      ],
+      "detected_dtypes": {
+        "timestamp": "datetime64[ns, UTC]",
+        "load": "float64",
+        "available_at": "datetime64[ns, UTC]"
+      },
+      "errors": [],
+      "warnings": []
+    },
+    "timestamp_validation": {
+      "total_rows": 35136,
+      "invalid_timestamps_count": 0,
+      "invalid_timestamps_pct": 0.0,
+      "min_timestamp": "2024-01-01 00:00:00+00:00",
+      "max_timestamp": "2024-12-31 23:45:00+00:00",
+      "is_monotonic": true
+    },
+    "duplicate_validation": {
+      "duplicate_count": 0,
+      "duplicate_pct": 0.0,
+      "dropped_duplicates": 0,
+      "duplicate_timestamps_sample": []
+    },
+    "missing_intervals": {
+      "expected_freq": "15min",
+      "expected_intervals": 35136,
+      "actual_intervals": 35136,
+      "missing_intervals_count": 0,
+      "missing_intervals_pct": 0.0,
+      "gap_events_count": 0,
+      "gap_timestamps_sample": []
+    },
+    "missing_demand_handling": {
+      "policy": "forward_fill_max_gap",
+      "initial_missing_count": 3,
+      "initial_missing_pct": 0.0085,
+      "imputed_count": 3,
+      "remaining_missing_count": 0,
+      "dropped_rows_count": 0,
+      "imputed_timestamps": [
+        "2024-10-27 00:15:00+00:00",
+        "2024-10-27 00:30:00+00:00",
+        "2024-10-27 00:45:00+00:00"
+      ],
+      "unresolved_timestamps": []
+    },
+    "range_validation": {
+      "total_evaluated": 35136,
+      "min_allowed": -500000000.0,
+      "max_allowed": 500000000.0,
+      "min_observed": -1130000.0,
+      "max_observed": 1736666.6666666665,
+      "out_of_range_count": 0,
+      "out_of_range_pct": 0.0,
+      "negative_load_count": 5896,
+      "negative_load_pct": 16.7805
+    }
+  }
+}

@@ -28,52 +28,104 @@ import { DispatchGuardrail } from "../../agent/policies/dispatch-guardrail.ts";
 import { createApiServer } from "../../apps/api/src/server.ts";
 import type { Server } from "node:http";
 
+import { resetLLMProvider, getLLMProvider, MockLLMProvider } from "../../agent/provider/index.ts";
+
 test("Operator Copilot & Analytical Tools Suite", async (t) => {
+  t.beforeEach(() => {
+    getLLMProvider(new MockLLMProvider());
+  });
+
+  t.afterEach(() => {
+    resetLLMProvider();
+  });
+
   // Test 1: Successful tool calls across all 8 individual tools
   await t.test("All 8 individual tools execute successfully and return typed data", async () => {
+    const mockClient: any = {
+      getGridState: async () => ({
+        timestamp: new Date().toISOString(),
+        zoneId: "NL_LIANDER_SUB_01",
+        demandMw: 85.0,
+        solarGenerationMw: 25.0,
+        windGenerationMw: 15.0,
+        batterySocPercent: 55.0,
+        curtailmentMw: 0.0,
+        gridStressIndex: 0.45,
+      }),
+      getDemandForecast: async () => ({
+        zoneId: "NL_LIANDER_SUB_01",
+        generatedAt: new Date().toISOString(),
+        horizonMinutes: 15,
+        points: [{ timestamp: new Date().toISOString(), demandMw: 88.0 }],
+        spikeRisk: { level: "normal", probability: 0.12, predictedPeakMw: 88.0 },
+        modelVersion: "lightgbm-v1",
+      }),
+      getRenewableStatuses: async () => [
+        {
+          assetId: "SOLAR_FARM_ALPHA",
+          assetType: "solar",
+          timestamp: new Date().toISOString(),
+          expectedMw: 25.0,
+          actualMw: 25.0,
+          performanceRatio: 1.0,
+          anomaly: false,
+        },
+      ],
+      solveOptimization: async (input: any) => ({
+        scenarioId: input.scenarioId,
+        status: "feasible",
+        solverStatus: "optimal",
+        actions: [{ actionType: "battery_discharge", powerMw: 10.0, resourceId: "BESS_01" }],
+        before: { demandMw: 85.0, renewableMw: 40.0, curtailmentMw: 0.0, gridStressIndex: 0.45 },
+        after: { demandMw: 85.0, renewableMw: 40.0, curtailmentMw: 0.0, gridStressIndex: 0.20 },
+        objectiveValue: 42.5,
+        solveDurationMs: 45,
+      }),
+    };
+
     // 1. get_current_grid_state
-    const stateRes = await get_current_grid_state({ zoneId: "NL_LIANDER_SUB_01" });
+    const stateRes = await get_current_grid_state({ zoneId: "NL_LIANDER_SUB_01" }, mockClient);
     assert.equal(stateRes.success, true);
     assert.equal(stateRes.toolName, "get_current_grid_state");
     assert.ok(stateRes.data);
     assert.equal(typeof stateRes.data.demandMw, "number");
 
     // 2. get_demand_forecast
-    const forecastRes = await get_demand_forecast({ zoneId: "NL_LIANDER_SUB_01", horizonMinutes: 15 });
+    const forecastRes = await get_demand_forecast({ zoneId: "NL_LIANDER_SUB_01", horizonMinutes: 15 }, mockClient);
     assert.equal(forecastRes.success, true);
     assert.equal(forecastRes.toolName, "get_demand_forecast");
     assert.ok(forecastRes.data);
     assert.ok(Array.isArray(forecastRes.data.points));
 
     // 3. get_renewable_status
-    const renewableRes = await get_renewable_status();
+    const renewableRes = await get_renewable_status({}, mockClient);
     assert.equal(renewableRes.success, true);
     assert.equal(renewableRes.toolName, "get_renewable_status");
     assert.ok(Array.isArray(renewableRes.data));
     assert.ok(renewableRes.data.length > 0);
 
     // 4. get_weather_forecast
-    const weatherRes = await get_weather_forecast({ zoneId: "NL_LIANDER_SUB_01" });
+    const weatherRes = await get_weather_forecast({ zoneId: "NL_LIANDER_SUB_01" }, mockClient);
     assert.equal(weatherRes.success, true);
     assert.equal(weatherRes.toolName, "get_weather_forecast");
     assert.ok(weatherRes.data);
     assert.equal(typeof weatherRes.data.ghiWm2, "number");
 
     // 5. get_renewable_anomalies
-    const anomalyRes = await get_renewable_anomalies();
+    const anomalyRes = await get_renewable_anomalies(mockClient);
     assert.equal(anomalyRes.success, true);
     assert.equal(anomalyRes.toolName, "get_renewable_anomalies");
     assert.ok(Array.isArray(anomalyRes.data));
 
     // 6. analyze_root_cause
-    const rootCauseRes = await analyze_root_cause({ assetId: "SOLAR_FARM_ZEELAND_01" });
+    const rootCauseRes = await analyze_root_cause({ assetId: "SOLAR_FARM_ZEELAND_01" }, mockClient);
     assert.equal(rootCauseRes.success, true);
     assert.equal(rootCauseRes.toolName, "analyze_root_cause");
     assert.ok(rootCauseRes.data);
     assert.ok(typeof rootCauseRes.data.confidence, "number");
 
     // 7. run_optimization
-    const optRes = await run_optimization({ scenarioId: "TEST_RUN_01" });
+    const optRes = await run_optimization({ scenarioId: "TEST_RUN_01" }, mockClient);
     assert.equal(optRes.success, true);
     assert.equal(optRes.toolName, "run_optimization");
     assert.ok(optRes.data);
@@ -85,7 +137,7 @@ test("Operator Copilot & Analytical Tools Suite", async (t) => {
       actionType: "battery_discharge",
       powerMw: 10.0,
       durationMinutes: 15,
-    });
+    }, mockClient);
     assert.equal(simRes.success, true);
     assert.equal(simRes.toolName, "simulate_action");
     assert.ok(simRes.data);
@@ -95,7 +147,48 @@ test("Operator Copilot & Analytical Tools Suite", async (t) => {
 
   // Test 2: Copilot end-to-end workflow (Intent recognition -> Tool execution -> Grounded explanation)
   await t.test("Copilot determines tools, calls them, and explains situation with feasible dispatch", async () => {
-    const copilot = new OperatorCopilot();
+    const mockClient: any = {
+      getGridState: async () => ({
+        timestamp: new Date().toISOString(),
+        zoneId: "NL_LIANDER_SUB_01",
+        demandMw: 85.0,
+        solarGenerationMw: 25.0,
+        windGenerationMw: 15.0,
+        batterySocPercent: 55.0,
+        curtailmentMw: 0.0,
+        gridStressIndex: 0.45,
+      }),
+      getDemandForecast: async () => ({
+        zoneId: "NL_LIANDER_SUB_01",
+        generatedAt: new Date().toISOString(),
+        horizonMinutes: 15,
+        points: [{ timestamp: new Date().toISOString(), demandMw: 88.0 }],
+        spikeRisk: { level: "normal", probability: 0.12, predictedPeakMw: 88.0 },
+        modelVersion: "lightgbm-v1",
+      }),
+      getRenewableStatuses: async () => [
+        {
+          assetId: "SOLAR_FARM_ALPHA",
+          assetType: "solar",
+          timestamp: new Date().toISOString(),
+          expectedMw: 25.0,
+          actualMw: 25.0,
+          performanceRatio: 1.0,
+          anomaly: false,
+        },
+      ],
+      solveOptimization: async (input: any) => ({
+        scenarioId: input.scenarioId,
+        status: "feasible",
+        solverStatus: "optimal",
+        actions: [{ actionType: "battery_discharge", powerMw: 10.0, resourceId: "BESS_01" }],
+        before: { demandMw: 85.0, renewableMw: 40.0, curtailmentMw: 0.0, gridStressIndex: 0.45 },
+        after: { demandMw: 85.0, renewableMw: 40.0, curtailmentMw: 0.0, gridStressIndex: 0.20 },
+        objectiveValue: 42.5,
+        solveDurationMs: 45,
+      }),
+    };
+    const copilot = new OperatorCopilot(mockClient);
     const response = await copilot.processQuery({
       query: "Check current grid demand, assess spike risk, and recommend optimal battery dispatch.",
     });

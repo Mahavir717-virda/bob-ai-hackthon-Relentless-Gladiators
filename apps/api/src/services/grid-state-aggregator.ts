@@ -24,6 +24,7 @@ import type {
   GridStressSnapshot,
 } from "../../../../shared/contracts/AggregatedGridSnapshot.ts";
 import { GRID_STRESS } from "../../../../shared/constants/index.ts";
+import { buildOptimizationInputFromRenewables } from "./adapters/renewable-optimization-adapter.ts";
 
 export interface AggregatorDependencies {
   serviceClient: ServiceClient;
@@ -44,56 +45,41 @@ export class GridStateAggregator {
     const timestamp = new Date().toISOString();
     const unavailableDependencies: string[] = [];
 
-    // Concurrently fetch from all domain endpoints with individual fault isolation
-    const [gridStateResult, forecastResult, renewableResult, optResult] =
+    // Concurrently fetch primary domain endpoints with individual fault isolation
+    const [gridStateResult, forecastResult, renewableResult] =
       await Promise.allSettled([
         this.serviceClient.getGridState(zoneId),
         this.serviceClient.getDemandForecast(zoneId, 60),
         this.serviceClient.getRenewableStatuses(),
-        this.serviceClient.solveOptimization({
-          scenarioId: "SNAPSHOT_EVAL",
-          targetTimestamp: timestamp,
-          horizonMinutes: 15,
-          currentGridState: {
-            timestamp,
-            zoneId,
-            demandMw: 85.0,
-            solarGenerationMw: 30.0,
-            windGenerationMw: 20.0,
-            netLoadMw: 35.0,
-            batterySocPercent: 65.0,
-            batteryPowerMw: 0.0,
-            curtailmentMw: 0.0,
-            gridFrequencyHz: 50.0,
-            gridStressIndex: 0.40,
-            activeAlertsCount: 0,
-          },
-          demandForecast: {
-            zoneId,
-            generatedAt: timestamp,
-            horizonMinutes: 15,
-            points: [{ timestamp, demandMw: 85.0 }],
-            spikeRisk: { level: "normal", probability: 0.1, predictedPeakMw: 85.0 },
-            modelVersion: "v1",
-          },
-          renewableForecastMw: 50.0,
-          batteryConstraints: {
-            maxCapacityMwh: 40.0,
-            currentSocPercent: 65.0,
-            minSocPercent: 10.0,
-            maxSocPercent: 90.0,
-            maxChargePowerMw: 20.0,
-            maxDischargePowerMw: 20.0,
-            roundTripEfficiency: 0.9,
-          },
-          flexibleLoadConstraints: {
-            totalFlexibleMw: 10.0,
-            maxShiftDurationMinutes: 60,
-            shiftCostPerMw: 15.0,
-          },
-          curtailmentPenaltyPerMw: 50.0,
-        }),
       ]);
+
+    // Compute optimization dispatch dynamically using real renewable telemetry if available
+    let optResult: PromiseSettledResult<any>;
+    if (
+      gridStateResult.status === "fulfilled" &&
+      forecastResult.status === "fulfilled" &&
+      renewableResult.status === "fulfilled" &&
+      Array.isArray(renewableResult.value) &&
+      renewableResult.value.length > 0
+    ) {
+      try {
+        const optInput = buildOptimizationInputFromRenewables(
+          renewableResult.value,
+          gridStateResult.value,
+          forecastResult.value,
+          { scenarioId: "SNAPSHOT_EVAL" }
+        );
+        const optData = await this.serviceClient.solveOptimization(optInput);
+        optResult = { status: "fulfilled", value: optData };
+      } catch (err: any) {
+        optResult = { status: "rejected", reason: err };
+      }
+    } else {
+      optResult = {
+        status: "rejected",
+        reason: new Error("Optimization unavailable because telemetry dependencies failed"),
+      };
+    }
 
     // 1. Current Demand & Grid Stress
     let currentDemand: CurrentDemandSnapshot = { status: "unavailable" };

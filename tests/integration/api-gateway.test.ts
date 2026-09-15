@@ -3,11 +3,95 @@ import assert from "node:assert/strict";
 import type { AddressInfo } from "node:net";
 
 import { createApiServer } from "../../apps/api/src/server.ts";
+import { ServiceClient } from "../../apps/api/src/service-client.ts";
 import { loadConfig } from "../../apps/api/src/config.ts";
+import { resetLLMProvider, getLLMProvider, MockLLMProvider } from "../../agent/provider/index.ts";
 
 test("API Gateway: End-to-end integration and routing suite", async (t) => {
+  t.beforeEach(() => {
+    getLLMProvider(new MockLLMProvider());
+  });
+
+  t.afterEach(() => {
+    resetLLMProvider();
+  });
+
   const config = loadConfig();
-  const server = createApiServer({ config });
+  const customServiceClient = new ServiceClient(config);
+  customServiceClient.getGridState = async (zoneId = "NL_LIANDER_SUB_01") => ({
+    timestamp: new Date().toISOString(),
+    zoneId,
+    demandMw: 85.4,
+    solarGenerationMw: 32.1,
+    windGenerationMw: 24.5,
+    netLoadMw: 28.8,
+    batterySocPercent: 65.0,
+    batteryPowerMw: 0.0,
+    curtailmentMw: 0.0,
+    gridFrequencyHz: 50.01,
+    gridStressIndex: 0.42,
+    activeAlertsCount: 0,
+  });
+  customServiceClient.getDemandForecast = async (zoneId = "NL_LIANDER_SUB_01", horizonMinutes = 15) => ({
+    zoneId,
+    generatedAt: new Date().toISOString(),
+    horizonMinutes,
+    points: [{ timestamp: new Date().toISOString(), demandMw: 88.0, lowerBoundMw: 84.0, upperBoundMw: 92.0 }],
+    spikeRisk: { level: "normal", probability: 0.12, predictedPeakMw: 88.0 },
+    modelVersion: "lightgbm-demand-v1.0",
+  });
+  customServiceClient.getRenewableStatuses = async () => [
+    {
+      assetId: "SOLAR_FARM_ALPHA",
+      assetType: "solar",
+      timestamp: new Date().toISOString(),
+      expectedMw: 28.5,
+      actualMw: 28.0,
+      performanceRatio: 0.98,
+      anomaly: false,
+    },
+    {
+      assetId: "WIND_PARK_BETA",
+      assetType: "wind",
+      timestamp: new Date().toISOString(),
+      expectedMw: 45.0,
+      actualMw: 44.2,
+      performanceRatio: 0.98,
+      anomaly: false,
+    },
+  ];
+  customServiceClient.solveOptimization = async (input) => ({
+    scenarioId: input.scenarioId,
+    status: "feasible",
+    solverStatus: "optimal",
+    actions: [],
+    before: { demandMw: 85.4, renewableMw: 56.6, curtailmentMw: 0, gridStressIndex: 0.42 },
+    after: { demandMw: 85.4, renewableMw: 56.6, curtailmentMw: 0, gridStressIndex: 0.35 },
+    objectiveValue: 10.0,
+    solveDurationMs: 15,
+  });
+  customServiceClient.replayScenario = async (scenarioId: string) => ({
+    scenario: {
+      scenarioId,
+      name: "Deterministic Demand Surge Replay",
+      description: "Replays Liander 2024 grid event",
+      historicalSourceTimestamp: "2024-06-12T14:00:00.000Z",
+      injectedEvents: [],
+      expectedOutcome: { expectedSpikeClass: "severe", expectedAnomalyScoreMin: 0.8, expectedFeasibleOptimization: true },
+    },
+    result: {
+      scenarioId,
+      status: "feasible",
+      solverStatus: "optimal",
+      actions: [],
+      before: { demandMw: 98.0, renewableMw: 19.0, curtailmentMw: 0.0, gridStressIndex: 0.89 },
+      after: { demandMw: 90.0, renewableMw: 19.0, curtailmentMw: 0.0, gridStressIndex: 0.42 },
+      objectiveValue: 138.4,
+      solveDurationMs: 42,
+    },
+  });
+
+  const server = createApiServer({ config, serviceClient: customServiceClient });
 
   // Bind to ephemeral port
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
@@ -58,14 +142,14 @@ test("API Gateway: End-to-end integration and routing suite", async (t) => {
   });
 
   await t.test("GET /api/renewable returns telemetry and anomalies", async () => {
-    const res = await fetch(`${baseUrl}/api/renewable`);
+    const res = await fetch(`${baseUrl}/api/renewable?assetId=SOLAR_FARM_ALPHA&timestamp=${encodeURIComponent(new Date().toISOString())}`);
     assert.equal(res.status, 200);
     const json = await res.json();
     assert.equal(json.success, true);
     assert.ok(Array.isArray(json.data));
-    assert.ok(json.data.length >= 2);
+    assert.ok(json.data.length >= 1);
 
-    const anomaliesRes = await fetch(`${baseUrl}/api/renewable/anomalies`);
+    const anomaliesRes = await fetch(`${baseUrl}/api/renewable/anomalies?start=2024-01-08T00:00:00Z&end=2024-01-08T23:59:59Z`);
     assert.equal(anomaliesRes.status, 200);
     const anomaliesJson = await anomaliesRes.json();
     assert.equal(anomaliesJson.success, true);
