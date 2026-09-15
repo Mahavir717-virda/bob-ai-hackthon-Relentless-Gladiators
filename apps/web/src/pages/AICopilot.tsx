@@ -131,6 +131,17 @@ export const AICopilotPage: React.FC = () => {
               {/* Extended Structured Output Metadata for Copilot Responses */}
               {msg.copilotResponse && (
                 <div className="mt-3.5 space-y-2.5 border-t border-slate-800/80 pt-3">
+                  {/* Provider & Model Badge */}
+                  {msg.copilotResponse.modelId && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] uppercase font-bold text-slate-400">Inference Engine:</span>
+                      <span className="rounded bg-indigo-950/40 border border-indigo-500/40 px-2 py-0.5 text-[10px] font-mono text-indigo-300 font-semibold flex items-center gap-1">
+                        <Cpu className="h-3 w-3 text-indigo-400" />
+                        {msg.copilotResponse.provider?.toUpperCase()} ({msg.copilotResponse.modelId})
+                      </span>
+                    </div>
+                  )}
+
                   {/* Tools Called Tags */}
                   <div className="flex flex-wrap items-center gap-1.5">
                     <span className="text-[10px] uppercase font-bold text-slate-400">Tools:</span>

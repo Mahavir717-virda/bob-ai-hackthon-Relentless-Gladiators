@@ -54,6 +54,8 @@ export interface CopilotResponse {
   toolErrors: string[];
   guardrailVerified: boolean;
   guardrailViolations: string[];
+  provider?: string;
+  modelId?: string;
 }
 
 export class OperatorCopilot {
@@ -325,6 +327,8 @@ export class OperatorCopilot {
       toolErrors,
       guardrailVerified: guardrailCheck.passed,
       guardrailViolations: guardrailCheck.violations,
+      provider: provider.getProviderName(),
+      modelId: provider.getModelId(),
     };
   }
 }

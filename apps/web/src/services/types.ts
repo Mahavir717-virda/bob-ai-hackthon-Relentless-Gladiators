@@ -195,6 +195,8 @@ export interface CopilotResponse {
   toolErrors: string[];
   guardrailVerified: boolean;
   guardrailViolations: string[];
+  provider?: string;
+  modelId?: string;
 }
 
 export interface Scenario {
