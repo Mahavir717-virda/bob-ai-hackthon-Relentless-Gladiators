@@ -267,42 +267,16 @@ export class ServiceClient {
    * Delegate to agent/provider for operator brief synthesis
    */
   async generateOperatorBrief(context: AgentContext): Promise<{ briefMarkdown: string }> {
-    const stress = context.currentGridState.gridStressIndex;
-    const spike = context.demandForecast.spikeRisk.level;
-    const actionsCount = context.optimizationResult?.actions.length ?? 0;
+    const { getLLMProvider } = await import("../../../agent/provider/index.ts");
+    const provider = getLLMProvider();
 
-    const brief = [
-      "## 1. Current Situation",
-      `Substation ${context.currentGridState.zoneId} operating at ${context.currentGridState.demandMw} MW demand with grid stress index ${stress.toFixed(2)}.`,
-      "",
-      "## 2. Risk Assessment",
-      `Demand spike risk classified as **${spike.toUpperCase()}** (probability: ${(context.demandForecast.spikeRisk.probability * 100).toFixed(1)}%).`,
-      "",
-      "## 3. Renewable Alert",
-      context.renewableStatuses.some((r) => r.anomaly)
-        ? `Anomaly detected on ${context.renewableStatuses.filter((r) => r.anomaly).map((r) => r.assetId).join(", ")}.`
-        : "All renewable generation assets operating within normal parameters.",
-      "",
-      "## 4. Root Cause",
-      context.renewableStatuses.find((r) => r.anomaly)?.likelyRootCause?.evidence ?? "No active root cause alarms.",
-      "",
-      "## 5. Recommended Actions",
-      actionsCount > 0
-        ? context.optimizationResult!.actions.map((a) => `- ${a.actionType.toUpperCase()}: ${a.powerMw} MW on ${a.resourceId} (${a.startTime} to ${a.endTime})`).join("\n")
-        : "- No dispatch action required.",
-      "",
-      "## 6. Expected Impact",
-      context.optimizationResult
-        ? `Grid stress index projected to reduce from ${context.optimizationResult.before.gridStressIndex.toFixed(2)} to ${context.optimizationResult.after.gridStressIndex.toFixed(2)}.`
-        : "Grid parameters remain stable.",
-      "",
-      "## 7. Confidence & Uncertainty",
-      "Demand forecast confidence intervals: ±4.2 MW. Model version: " + context.demandForecast.modelVersion + ".",
-      "",
-      "## 8. Data Limitations",
-      "15-minute telemetry resolution. Battery SOC telemetry based on empirical degradation models.",
-    ].join("\n");
+    const response = await provider.generate({
+      systemPrompt: "You are the GridPilot AI Operator Copilot. Synthesize an 8-section operator brief from the provided structured grid telemetry, forecasting risk, asset health, and optimization dispatch schedule. Strictly adhere to numerical ground truth.",
+      userPrompt: "Generate the 15-minute Grid Operator Brief.",
+      contextData: context as unknown as Record<string, any>,
+    });
 
-    return { briefMarkdown: brief };
+    return { briefMarkdown: response.text };
   }
 }
+
