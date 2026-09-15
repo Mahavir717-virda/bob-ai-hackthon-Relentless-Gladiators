@@ -11,7 +11,7 @@
 | **Team Name** | Relentless Gladiators |
 | **Track** | AI |
 | **Team Lead** | Mahavir Virda — 24ce142@charusat.edu.in |
-| **Members** | Deep Patel (24ce095@charusat.edu.in), Savan Patel (24aiml060@charusat.edu.in), Tirth Patel (24aiml046@charusat.edu.in) |
+| **Members** | Deep pathak (24ce095@charusat.edu.in), Savan Patel (24aiml060@charusat.edu.in), Tirth Patel (24aiml046@charusat.edu.in) |
 
 ---
 
