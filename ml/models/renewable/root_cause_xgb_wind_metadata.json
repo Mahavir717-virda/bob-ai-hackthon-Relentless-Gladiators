@@ -1,0 +1,39 @@
+{
+  "model_type": "XGBoostRegressor",
+  "task": "percentage_deviation_association",
+  "asset_type": "wind",
+  "version": "1.0.0",
+  "trained_at": "2026-09-15T10:50:31.419988+00:00",
+  "features": [
+    "cloud_cover",
+    "temperature_2m",
+    "relative_humidity_2m",
+    "hour_of_day",
+    "day_of_week",
+    "season",
+    "lag_1",
+    "roll_mean_4",
+    "anomaly",
+    "wind_speed_10m",
+    "wind_speed_cubed",
+    "wind_dir_sin",
+    "wind_dir_cos",
+    "diagnostic_category_uncertain"
+  ],
+  "target": "percentage_deviation",
+  "n_train_rows": 48,
+  "n_val_rows": 12,
+  "train_period": {
+    "start": "2026-01-01 00:00:00+00:00",
+    "end": "2026-01-01 11:45:00+00:00"
+  },
+  "val_period": {
+    "start": "2026-01-01 12:00:00+00:00",
+    "end": "2026-01-01 14:45:00+00:00"
+  },
+  "validation_metrics": {
+    "mae_percentage_points": 0.10845343271891277,
+    "rmse_percentage_points": 0.15017566052770667
+  },
+  "notes": "SHAP identifies associations in deviation predictions; it does not establish physical causation."
+}

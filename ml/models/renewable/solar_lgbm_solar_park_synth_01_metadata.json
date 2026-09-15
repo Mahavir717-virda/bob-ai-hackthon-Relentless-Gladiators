@@ -1,0 +1,116 @@
+{
+  "model_type": "LightGBM",
+  "task": "solar_generation_forecast",
+  "asset_name": "solar_park_synth_01",
+  "version": "1.0.0",
+  "trained_at": "2026-09-15T09:07:51.187330+00:00",
+  "features": [
+    "hour_of_day",
+    "minute_of_day",
+    "day_of_year",
+    "month",
+    "day_of_week",
+    "is_weekend",
+    "solar_elevation_deg",
+    "solar_azimuth_deg",
+    "cos_solar_zenith",
+    "cloud_cover",
+    "temperature_2m",
+    "relative_humidity_2m",
+    "surface_pressure",
+    "lag_1",
+    "lag_2",
+    "lag_4",
+    "lag_8",
+    "lag_96",
+    "lag_192",
+    "lag_672",
+    "roll_mean_4",
+    "roll_mean_96",
+    "roll_std_96"
+  ],
+  "target": "solar_generation_mw",
+  "n_train_rows": 27494,
+  "n_val_rows": 6874,
+  "train_period": {
+    "start": "2024-01-08 00:00:00+00:00",
+    "end": "2024-10-20 09:15:00+00:00"
+  },
+  "val_period": {
+    "start": "2024-10-20 09:30:00+00:00",
+    "end": "2024-12-30 23:45:00+00:00"
+  },
+  "lgb_params": {
+    "objective": "regression_l1",
+    "metric": [
+      "mae",
+      "rmse"
+    ],
+    "n_estimators": 1000,
+    "learning_rate": 0.05,
+    "num_leaves": 63,
+    "max_depth": -1,
+    "min_child_samples": 20,
+    "subsample": 0.8,
+    "subsample_freq": 1,
+    "colsample_bytree": 0.8,
+    "reg_alpha": 0.1,
+    "reg_lambda": 0.1,
+    "n_jobs": -1,
+    "random_state": 42,
+    "verbose": -1
+  },
+  "best_iteration": 639,
+  "validation_metrics": {
+    "mae_mw": 0.01601,
+    "rmse_mw": 0.040034,
+    "mape_pct": 7.2652,
+    "n_samples": 6874,
+    "n_daytime_samples_for_mape": 2359
+  },
+  "top_10_features_by_importance": [
+    [
+      "cloud_cover",
+      3659
+    ],
+    [
+      "lag_1",
+      3173
+    ],
+    [
+      "lag_672",
+      2541
+    ],
+    [
+      "lag_4",
+      2432
+    ],
+    [
+      "lag_192",
+      2385
+    ],
+    [
+      "surface_pressure",
+      2363
+    ],
+    [
+      "lag_96",
+      2295
+    ],
+    [
+      "relative_humidity_2m",
+      2233
+    ],
+    [
+      "lag_2",
+      2042
+    ],
+    [
+      "solar_elevation_deg",
+      2000
+    ]
+  ],
+  "unit": "MW",
+  "data_source": "OpenSTEF Liander 2024 (synthetic fixture in absence of downloaded data)",
+  "notes": "Generation values in Watts converted to MW (x1e-6). Night-time zeros are genuine, not imputed. Validation split is strictly chronological (last 20% of timeline). No shuffle applied to preserve temporal integrity."
+}
