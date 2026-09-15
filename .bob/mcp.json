@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "project-tools": {
+      "command": "node",
+      "args": [
+        "./src/mcp-server/index.js"
+      ]
+    }
+  }
+}
