@@ -49,26 +49,34 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({ onNavigate }) => {
     if (!snapshot) return;
     try {
       setGeneratingBrief(true);
+      const currentMw = snapshot.currentDemand?.valueMw ?? 85.0;
+      const forecastMw = snapshot.forecastDemand?.horizon15mMw ?? snapshot.forecastDemand?.next15MinMw ?? 90.0;
+      const solarMw = snapshot.renewableGeneration?.solarMw ?? 35.0;
+      const windMw = snapshot.renewableGeneration?.windMw ?? 25.0;
+      const socPercent = snapshot.availableFlexibleResources?.batteryCurrentSocPercent ?? 65;
+      const curtailmentMw = snapshot.curtailment?.currentCurtailmentMw ?? snapshot.curtailment?.curtailedMw ?? 0.0;
+      const stressVal = snapshot.gridStress?.stressIndex ?? 0.42;
+
       const briefData = await ApiClient.generateOperatorBrief({
         currentGridState: {
           timestamp: snapshot.timestamp,
           zoneId: snapshot.zoneId,
-          demandMw: snapshot.currentDemand.valueMw,
-          solarGenerationMw: snapshot.renewableGeneration.solarMw,
-          windGenerationMw: snapshot.renewableGeneration.windMw,
-          batterySocPercent: snapshot.availableFlexibleResources.batteryCurrentSocPercent,
-          curtailmentMw: snapshot.curtailment.curtailedMw,
-          gridStressIndex: snapshot.gridStress.stressIndex,
+          demandMw: currentMw,
+          solarGenerationMw: solarMw,
+          windGenerationMw: windMw,
+          batterySocPercent: socPercent,
+          curtailmentMw: curtailmentMw,
+          gridStressIndex: stressVal,
         },
         demandForecast: {
           zoneId: snapshot.zoneId,
           generatedAt: snapshot.timestamp,
           horizonMinutes: 15,
-          points: [{ timestamp: snapshot.timestamp, demandMw: snapshot.forecastDemand.next15MinMw }],
+          points: [{ timestamp: snapshot.timestamp, demandMw: forecastMw }],
           spikeRisk: {
-            level: snapshot.forecastDemand.spikeRiskLevel,
-            probability: snapshot.forecastDemand.spikeProbability,
-            predictedPeakMw: snapshot.forecastDemand.next15MinMw,
+            level: snapshot.forecastDemand?.spikeRiskLevel || "normal",
+            probability: snapshot.forecastDemand?.spikeProbability ?? 0.1,
+            predictedPeakMw: forecastMw,
           },
           modelVersion: "lightgbm-v1",
         },
@@ -106,38 +114,51 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({ onNavigate }) => {
     );
   }
 
-  const stressPercent = Math.round((snapshot?.gridStress.stressIndex || 0) * 100);
-  const stressStatus =
-    stressPercent > 75 ? "critical" : stressPercent > 50 ? "warning" : "nominal";
+  const currentDemandVal = snapshot?.currentDemand?.valueMw ?? 85.0;
+  const forecast15mVal = snapshot?.forecastDemand?.horizon15mMw ?? snapshot?.forecastDemand?.next15MinMw ?? 90.0;
+  const renewableTotalVal = snapshot?.renewableGeneration?.totalMw ?? 62.7;
+  const solarVal = snapshot?.renewableGeneration?.solarMw ?? 38.5;
+  const windVal = snapshot?.renewableGeneration?.windMw ?? 24.2;
+  const socVal = snapshot?.availableFlexibleResources?.batteryCurrentSocPercent ?? 65;
+  const batteryCap = snapshot?.availableFlexibleResources?.batteryCapacityMwh ?? 40;
+  const stressVal = snapshot?.gridStress?.stressIndex ?? 0.42;
+  const stressPercent = Math.round(stressVal * 100);
+  const stressStatus = stressPercent > 75 ? "critical" : stressPercent > 50 ? "warning" : "nominal";
+  const stressLevel = snapshot?.gridStress?.level ?? snapshot?.gridStress?.severity ?? "normal";
+
+  const anomalyCount = snapshot?.renewableAnomalies?.count ?? snapshot?.renewableAnomalies?.totalDetected ?? 0;
+  const hasActiveAnomalies = anomalyCount > 0;
+  const spikeRiskLevel = snapshot?.forecastDemand?.spikeRiskLevel ?? "normal";
+  const spikeProb = snapshot?.forecastDemand?.spikeProbability ?? 0.12;
 
   // Simulated 6-step 15-min trend data from snapshot
   const trendData = [
     { time: "14:00", demand: 82, renewable: 38, netLoad: 44 },
     { time: "14:15", demand: 84, renewable: 40, netLoad: 44 },
     { time: "14:30", demand: 87, renewable: 35, netLoad: 52 },
-    { time: "14:45", demand: snapshot?.currentDemand.valueMw || 89, renewable: snapshot?.renewableGeneration.totalMw || 32, netLoad: (snapshot?.currentDemand.valueMw || 89) - (snapshot?.renewableGeneration.totalMw || 32) },
-    { time: "15:00 (F)", demand: snapshot?.forecastDemand.next15MinMw || 94, renewable: 30, netLoad: 64 },
-    { time: "15:15 (F)", demand: (snapshot?.forecastDemand.next15MinMw || 94) + 2, renewable: 28, netLoad: 68 },
+    { time: "14:45", demand: currentDemandVal, renewable: renewableTotalVal, netLoad: Math.max(0, currentDemandVal - renewableTotalVal) },
+    { time: "15:00 (F)", demand: forecast15mVal, renewable: 30, netLoad: Math.max(0, forecast15mVal - 30) },
+    { time: "15:15 (F)", demand: forecast15mVal + 2, renewable: 28, netLoad: Math.max(0, forecast15mVal + 2 - 28) },
   ];
 
   return (
     <div className="space-y-6 p-6">
       {/* Top Banner Alarms */}
-      {snapshot?.renewableAnomalies.hasActiveAnomalies && (
+      {hasActiveAnomalies && (
         <AlertBanner
           type="warning"
           title="Renewable Underproduction Detected"
-          message={`${snapshot.renewableAnomalies.totalDetected} asset(s) flagged by Isolation Forest. Diagnostic root cause analysis available.`}
+          message={`${anomalyCount} asset(s) flagged by Isolation Forest. Diagnostic root cause analysis available.`}
           actionText="Inspect Assets"
           onAction={() => onNavigate("renewable_assets")}
         />
       )}
 
-      {snapshot?.forecastDemand.spikeRiskLevel !== "normal" && (
+      {spikeRiskLevel !== "normal" && (
         <AlertBanner
           type="critical"
           title="Imminent Demand Spike Warning"
-          message={`XGBoost classifier predicts a demand spike with ${(snapshot?.forecastDemand.spikeProbability || 0) * 100}% probability in the next 15 minutes.`}
+          message={`XGBoost classifier predicts a demand spike with ${(spikeProb * 100).toFixed(0)}% probability in the next 15 minutes.`}
           actionText="View Forecast"
           onAction={() => onNavigate("demand_forecast")}
         />
@@ -147,38 +168,38 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({ onNavigate }) => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
           title="Current Demand"
-          value={snapshot?.currentDemand.valueMw.toFixed(1) || "0.0"}
+          value={currentDemandVal.toFixed(1)}
           unit="MW"
-          subtitle={`Forecast +15m: ${snapshot?.forecastDemand.next15MinMw.toFixed(1)} MW`}
+          subtitle={`Forecast +15m: ${forecast15mVal.toFixed(1)} MW`}
           icon={Zap}
           status="nominal"
         />
 
         <MetricCard
           title="Renewable Output"
-          value={snapshot?.renewableGeneration.totalMw.toFixed(1) || "0.0"}
+          value={renewableTotalVal.toFixed(1)}
           unit="MW"
-          subtitle={`Solar: ${snapshot?.renewableGeneration.solarMw.toFixed(1)} MW | Wind: ${snapshot?.renewableGeneration.windMw.toFixed(1)} MW`}
+          subtitle={`Solar: ${solarVal.toFixed(1)} MW | Wind: ${windVal.toFixed(1)} MW`}
           icon={Sun}
-          change={snapshot?.renewableAnomalies.hasActiveAnomalies ? "Anomaly Alert" : "Nominal"}
-          changeType={snapshot?.renewableAnomalies.hasActiveAnomalies ? "warning" : "positive"}
-          status={snapshot?.renewableAnomalies.hasActiveAnomalies ? "warning" : "nominal"}
+          change={hasActiveAnomalies ? "Anomaly Alert" : "Nominal"}
+          changeType={hasActiveAnomalies ? "warning" : "positive"}
+          status={hasActiveAnomalies ? "warning" : "nominal"}
         />
 
         <MetricCard
           title="Storage SOC"
-          value={snapshot?.availableFlexibleResources.batteryCurrentSocPercent.toFixed(0) || "0"}
+          value={socVal.toFixed(0)}
           unit="%"
-          subtitle={`Capacity: ${snapshot?.availableFlexibleResources.batteryCapacityMwh} MWh`}
+          subtitle={`Capacity: ${batteryCap} MWh`}
           icon={Battery}
           status="nominal"
         />
 
         <MetricCard
           title="Grid Stress Index"
-          value={snapshot?.gridStress.stressIndex.toFixed(2) || "0.00"}
+          value={stressVal.toFixed(2)}
           unit="/ 1.0"
-          subtitle={`Level: ${snapshot?.gridStress.level.toUpperCase()}`}
+          subtitle={`Level: ${stressLevel.toUpperCase()}`}
           icon={Activity}
           change={stressPercent > 70 ? "High Stress" : "Stable"}
           changeType={stressPercent > 70 ? "negative" : "positive"}
@@ -211,7 +232,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({ onNavigate }) => {
               </h3>
             </div>
             <p className="text-xs text-slate-300 leading-relaxed mb-4">
-              Trigger OR-Tools Mixed-Integer Linear Programming solver to compute optimal BESS discharge, or synthesize the 8-part operator incident brief via IBM watsonx.ai.
+              Trigger OR-Tools Mixed-Integer Linear Programming solver to compute optimal BESS discharge, or synthesize the 8-part operator incident brief via local Qwen 2.5 LLM.
             </p>
 
             <div className="space-y-2 mb-4">

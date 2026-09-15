@@ -4,8 +4,17 @@ import type { AddressInfo } from "node:net";
 
 import { createApiServer } from "../../apps/api/src/server.ts";
 import { loadConfig } from "../../apps/api/src/config.ts";
+import { resetLLMProvider, getLLMProvider, MockLLMProvider } from "../../agent/provider/index.ts";
 
 test("API Gateway: End-to-end integration and routing suite", async (t) => {
+  t.beforeEach(() => {
+    getLLMProvider(new MockLLMProvider());
+  });
+
+  t.afterEach(() => {
+    resetLLMProvider();
+  });
+
   const config = loadConfig();
   const server = createApiServer({ config });
 

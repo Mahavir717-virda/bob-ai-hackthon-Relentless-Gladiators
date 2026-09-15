@@ -20,39 +20,67 @@ export interface OperationalSnapshot {
   timestamp: string;
   zoneId: string;
   currentDemand: {
-    valueMw: number;
-    timestamp: string;
-    isAvailable: boolean;
+    status?: string;
+    valueMw?: number;
+    zoneId?: string;
+    timestamp?: string;
+    isAvailable?: boolean;
   };
   forecastDemand: {
-    next15MinMw: number;
-    spikeProbability: number;
-    spikeRiskLevel: "normal" | "warning" | "severe";
-    isAvailable: boolean;
+    status?: string;
+    horizon15mMw?: number;
+    horizon30mMw?: number;
+    horizon60mMw?: number;
+    next15MinMw?: number;
+    spikeProbability?: number;
+    spikeRiskLevel?: "normal" | "warning" | "severe";
+    isAvailable?: boolean;
   };
   renewableGeneration: {
-    solarMw: number;
-    windMw: number;
-    totalMw: number;
-    isAvailable: boolean;
+    status?: string;
+    solarMw?: number;
+    windMw?: number;
+    totalMw?: number;
+    assetCount?: number;
+    isAvailable?: boolean;
   };
   renewableAnomalies: {
-    totalDetected: number;
-    hasActiveAnomalies: boolean;
-    isAvailable: boolean;
+    status?: string;
+    count?: number;
+    anomalies?: any[];
+    totalDetected?: number;
+    hasActiveAnomalies?: boolean;
+    isAvailable?: boolean;
   };
   availableFlexibleResources: {
-    batteryCapacityMwh: number;
-    batteryCurrentSocPercent: number;
-    flexibleLoadCapacityMw: number;
-    isAvailable: boolean;
+    status?: string;
+    batteryCapacityMwh?: number;
+    batteryCurrentSocPercent?: number;
+    batteryAvailableDischargeMw?: number;
+    flexibleLoadCapacityMw?: number;
+    isAvailable?: boolean;
   };
   curtailment: {
-    curtailedMw: number;
-    economicCostEur: number;
-    isAvailable: boolean;
+    status?: string;
+    currentCurtailmentMw?: number;
+    curtailmentMitigatedMw?: number;
+    curtailedMw?: number;
+    economicCostEur?: number;
+    isAvailable?: boolean;
   };
-  gridStress: GridStressIndicators;
+  gridStress: {
+    status?: string;
+    stressIndex?: number;
+    frequencyHz?: number;
+    severity?: "normal" | "warning" | "critical";
+    level?: "low" | "medium" | "high" | "critical";
+    isSpikePredicted?: boolean;
+    activeAnomaliesCount?: number;
+  };
+  systemHealth?: {
+    isDegraded: boolean;
+    unavailableDependencies: string[];
+  };
 }
 
 export interface DemandForecastPoint {
@@ -167,6 +195,8 @@ export interface CopilotResponse {
   toolErrors: string[];
   guardrailVerified: boolean;
   guardrailViolations: string[];
+  provider?: string;
+  modelId?: string;
 }
 
 export interface Scenario {
@@ -174,16 +204,16 @@ export interface Scenario {
   name: string;
   description: string;
   historicalSourceTimestamp: string;
-  injectedEvents: Array<{
+  injectedEvents?: Array<{
     timestampOffsetMinutes: number;
     eventType: string;
     severity: number;
     assetOrZoneId: string;
   }>;
-  expectedOutcome: {
-    expectedSpikeClass: string;
-    expectedAnomalyScoreMin: number;
-    expectedFeasibleOptimization: boolean;
+  expectedOutcome?: {
+    expectedSpikeClass?: string;
+    expectedAnomalyScoreMin?: number;
+    expectedFeasibleOptimization?: boolean;
   };
 }
 

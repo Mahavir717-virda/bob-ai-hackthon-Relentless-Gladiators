@@ -80,7 +80,7 @@ def get_operator_brief():
             f"Discharge {a['powerMw']} MW from {a['resourceId']}" for a in opt["actions"]
         ],
         "feasible": opt["status"] == "feasible",
-        "watsonxConfidence": 0.91
+        "llmConfidence": 0.91
     }
 
 if __name__ == "__main__":

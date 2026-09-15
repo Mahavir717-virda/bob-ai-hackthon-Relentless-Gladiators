@@ -28,7 +28,17 @@ import { DispatchGuardrail } from "../../agent/policies/dispatch-guardrail.ts";
 import { createApiServer } from "../../apps/api/src/server.ts";
 import type { Server } from "node:http";
 
+import { resetLLMProvider, getLLMProvider, MockLLMProvider } from "../../agent/provider/index.ts";
+
 test("Operator Copilot & Analytical Tools Suite", async (t) => {
+  t.beforeEach(() => {
+    getLLMProvider(new MockLLMProvider());
+  });
+
+  t.afterEach(() => {
+    resetLLMProvider();
+  });
+
   // Test 1: Successful tool calls across all 8 individual tools
   await t.test("All 8 individual tools execute successfully and return typed data", async () => {
     // 1. get_current_grid_state

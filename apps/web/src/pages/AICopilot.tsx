@@ -27,7 +27,7 @@ export const AICopilotPage: React.FC = () => {
       id: "msg_welcome",
       sender: "copilot",
       timestamp: new Date().toISOString(),
-      text: "GridPilot AI Operator Copilot active. I am connected via IBM Bob and watsonx.ai to SCADA telemetry, LightGBM demand forecaster, Isolation Forest anomaly detector, and the OR-Tools MILP optimizer. How can I assist with grid operations?",
+      text: "GridPilot AI Operator Copilot active. I am powered by local Qwen 2.5 and IBM Bob MCP tools connected to SCADA telemetry, LightGBM demand forecaster, Isolation Forest anomaly detector, and the OR-Tools MILP optimizer. How can I assist with grid operations?",
     },
   ]);
   const [inputText, setInputText] = useState("");
@@ -89,10 +89,10 @@ export const AICopilotPage: React.FC = () => {
           </div>
           <div>
             <h3 className="text-xs font-bold text-white tracking-wide">
-              IBM Bob & watsonx.ai Command Copilot
+              IBM Bob Command Copilot (Local Qwen 2.5)
             </h3>
             <span className="text-[11px] text-slate-400">
-              Granite 3.0 / Llama 3 with 8 Analytical MCP Tools & Dispatch Guardrails
+              Qwen 2.5 / Ollama with 8 Analytical MCP Tools & Dispatch Guardrails
             </span>
           </div>
         </div>
@@ -131,6 +131,17 @@ export const AICopilotPage: React.FC = () => {
               {/* Extended Structured Output Metadata for Copilot Responses */}
               {msg.copilotResponse && (
                 <div className="mt-3.5 space-y-2.5 border-t border-slate-800/80 pt-3">
+                  {/* Provider & Model Badge */}
+                  {msg.copilotResponse.modelId && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] uppercase font-bold text-slate-400">Inference Engine:</span>
+                      <span className="rounded bg-indigo-950/40 border border-indigo-500/40 px-2 py-0.5 text-[10px] font-mono text-indigo-300 font-semibold flex items-center gap-1">
+                        <Cpu className="h-3 w-3 text-indigo-400" />
+                        {msg.copilotResponse.provider?.toUpperCase()} ({msg.copilotResponse.modelId})
+                      </span>
+                    </div>
+                  )}
+
                   {/* Tools Called Tags */}
                   <div className="flex flex-wrap items-center gap-1.5">
                     <span className="text-[10px] uppercase font-bold text-slate-400">Tools:</span>

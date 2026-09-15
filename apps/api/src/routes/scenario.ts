@@ -17,6 +17,25 @@ export async function handleScenario(
         name: "Deterministic Demand Surge with Cloud Cover Drop",
         description: "Replays Liander 2024 grid event with simultaneous solar generation reduction.",
         historicalSourceTimestamp: "2024-06-12T14:00:00.000Z",
+        injectedEvents: [
+          {
+            timestampOffsetMinutes: 15,
+            eventType: "demand_spike",
+            severity: 0.18,
+            assetOrZoneId: "NL_LIANDER_SUB_01",
+          },
+          {
+            timestampOffsetMinutes: 15,
+            eventType: "solar_drop",
+            severity: 0.55,
+            assetOrZoneId: "SOLAR_FARM_ZEELAND_03",
+          },
+        ],
+        expectedOutcome: {
+          expectedSpikeClass: "severe",
+          expectedAnomalyScoreMin: 0.80,
+          expectedFeasibleOptimization: true,
+        },
       },
     ];
 
