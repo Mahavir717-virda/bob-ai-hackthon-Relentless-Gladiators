@@ -1,0 +1,5 @@
+model_version,class,precision,recall,f1,support
+demand-spike-xgb-v1,normal,0.9979,0.9935,0.9957,5239
+demand-spike-xgb-v1,moderate,0.2647,0.36,0.3051,25
+demand-spike-xgb-v1,severe,0.2,0.6667,0.3077,6
+demand-spike-xgb-v1,macro_average,0.4875,0.6734,0.5362,5270
