@@ -1,0 +1,28 @@
+{
+  "name": "gridpilot-ai",
+  "version": "0.1.0",
+  "description": "GridPilot AI — Grid Load Optimisation & Renewable Energy Performance Advisor",
+  "type": "module",
+  "scripts": {
+    "start:api": "node --experimental-strip-types apps/api/src/index.ts",
+    "start:web": "npm --prefix apps/web run dev",
+    "build:web": "npm --prefix apps/web run build",
+    "test": "node --test --experimental-strip-types tests/integration/**/*.test.ts",
+    "test:contracts": "node --test --experimental-strip-types tests/integration/contracts.test.ts",
+    "test:api": "node --test --experimental-strip-types tests/integration/api-gateway.test.ts"
+  },
+  "keywords": [
+    "grid-optimization",
+    "renewable-energy",
+    "load-forecasting",
+    "ibm-bob",
+    "ollama",
+    "qwen"
+  ],
+  "author": "Relentless Gladiators",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@types/node": "^26.5.1",
+    "typescript": "^7.0.2"
+  }
+}

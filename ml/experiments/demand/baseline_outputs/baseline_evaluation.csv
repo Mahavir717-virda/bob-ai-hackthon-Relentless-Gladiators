@@ -1,0 +1,7 @@
+model,horizon_minutes,mae,rmse,mape,n,target_col,test_samples
+persistence,15,0.0382,0.0673,12.2493,5271,demand_mw,5271
+persistence,30,0.0631,0.0996,19.0889,5271,demand_mw,5271
+persistence,60,0.1056,0.1492,29.9858,5271,demand_mw,5271
+seasonal_naive,15,0.1266,0.1976,37.6271,5271,demand_mw,5271
+seasonal_naive,30,0.1266,0.1976,37.6271,5271,demand_mw,5271
+seasonal_naive,60,0.1266,0.1976,37.6271,5271,demand_mw,5271

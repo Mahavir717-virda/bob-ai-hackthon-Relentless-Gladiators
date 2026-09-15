@@ -11,7 +11,7 @@
 | **Team Name** | Relentless Gladiators |
 | **Track** | AI |
 | **Team Lead** | Mahavir Virda — 24ce142@charusat.edu.in |
-| **Members** | Deep Patel (24ce095@charusat.edu.in), Savan Patel (24aiml060@charusat.edu.in), Tirth Patel (24aiml046@charusat.edu.in) |
+| **Members** | Deep pathak (24ce095@charusat.edu.in), Savan Patel (24aiml060@charusat.edu.in), Tirth Savan (24aiml046@charusat.edu.in) |
 
 ---
 
@@ -23,7 +23,7 @@ Power grid operators face unprecedented volatility with renewable integration: s
 
 ## 💡 Solution
 
-GridPilot AI is an operator decision-support system coupling machine learning forecasting (LightGBM demand, solar, and wind models; XGBoost spike detection; Isolation Forest anomaly tracking) with Google OR-Tools Mixed-Integer Linear Programming (MILP). It translates complex grid telemetry into actionable 15-minute operator briefs and interactive natural language actions powered by IBM watsonx.ai and IBM Bob.
+GridPilot AI is an operator decision-support system coupling machine learning forecasting (LightGBM demand, solar, and wind models; XGBoost spike detection; Isolation Forest anomaly tracking) with Google OR-Tools Mixed-Integer Linear Programming (MILP). It translates complex grid telemetry into actionable 15-minute operator briefs and interactive natural language actions powered by local Qwen 2.5 (Ollama) and IBM Bob.
 
 ---
 
@@ -32,7 +32,7 @@ GridPilot AI is an operator decision-support system coupling machine learning fo
 - **High-Frequency Forecasting:** 15, 30, and 60-minute electricity demand, solar generation, and wind output forecasting using LightGBM.
 - **Spike & Anomaly Diagnostics:** Multi-class demand spike detection via XGBoost and asset anomaly tracking via Isolation Forest with SHAP root-cause explainability.
 - **Constraint-Aware Optimization:** Mathematical MILP optimization using Google OR-Tools for battery energy storage system (BESS) dispatch and industrial flexible load shifting.
-- **IBM Bob Shell & watsonx.ai Integration:** Custom Model Context Protocol (MCP) server enabling IBM Bob to query grid telemetry, run optimizations, and synthesize 8-part operator briefs.
+- **IBM Bob Shell & Local LLM Integration:** Custom Model Context Protocol (MCP) server enabling IBM Bob and local Qwen 2.5 to query grid telemetry, run optimizations, and synthesize 8-part operator briefs.
 - **Interactive Operator Command Center:** Real-time visual telemetry, before/after load balancing comparison, and decision-support dashboard.
 
 ---
@@ -43,7 +43,7 @@ GridPilot AI is an operator decision-support system coupling machine learning fo
 |---|---|
 | **Languages** | Python, TypeScript, JavaScript |
 | **Frameworks** | FastAPI, React, Express, Node.js |
-| **IBM Technologies** | IBM watsonx.ai (Granite 3.0), IBM Bob (BobShell CLI) |
+| **Local LLM & Agent** | Qwen 2.5 (Ollama), IBM Bob (BobShell CLI) |
 | **Databases & Math** | PostgreSQL, Google OR-Tools (MILP / SCIP) |
 | **ML & Analytics** | LightGBM, XGBoost, Scikit-learn, SHAP, Pandas |
 | **Other** | Docker, Git, Model Context Protocol (MCP) |
@@ -62,7 +62,7 @@ GridPilot AI is an operator decision-support system coupling machine learning fo
 │   ├── renewable/        # Solar/wind generation, Isolation Forest, XGBoost+SHAP
 │   └── optimization/     # Google OR-Tools MILP grid balance & curtailment engine
 ├── agent/
-│   ├── provider/         # watsonx.ai Granite 3.0 & Bob LLM provider abstraction
+│   ├── provider/         # Local Qwen 2.5 (Ollama) & Bob LLM provider abstraction
 │   ├── tools/            # Model Context Protocol (MCP) tools & function registry
 │   ├── prompts/          # 8-part operator brief & copilot structured prompts
 │   ├── orchestration/    # Headless 15-min incident workflows (`bob run`)
@@ -137,4 +137,4 @@ uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
 
 ## 🏅 What We're Most Proud Of
 
-The clean separation of concerns between predictive machine learning, mathematical constraint optimization (OR-Tools), and communicative generative AI (IBM Bob & watsonx.ai). The LLM never hallucinates dispatch numbers; it explains mathematically verified and physically feasible dispatch recommendations.
+The clean separation of concerns between predictive machine learning, mathematical constraint optimization (OR-Tools), and communicative generative AI (IBM Bob & local Qwen 2.5). The LLM never hallucinates dispatch numbers; it explains mathematically verified and physically feasible dispatch recommendations.

@@ -1,0 +1,77 @@
+{
+  "split": {
+    "train_samples": 24595,
+    "val_samples": 5270,
+    "test_samples": 5271,
+    "test_start": "2024-11-07 02:15:00+00:00",
+    "test_end": "2024-12-31 23:45:00+00:00"
+  },
+  "horizons_minutes": [
+    15,
+    30,
+    60
+  ],
+  "target_col": "demand_mw",
+  "results": [
+    {
+      "model": "persistence",
+      "horizon_minutes": 15,
+      "mae": 0.0382,
+      "rmse": 0.0673,
+      "mape": 12.2493,
+      "n": 5271,
+      "target_col": "demand_mw",
+      "test_samples": 5271
+    },
+    {
+      "model": "persistence",
+      "horizon_minutes": 30,
+      "mae": 0.0631,
+      "rmse": 0.0996,
+      "mape": 19.0889,
+      "n": 5271,
+      "target_col": "demand_mw",
+      "test_samples": 5271
+    },
+    {
+      "model": "persistence",
+      "horizon_minutes": 60,
+      "mae": 0.1056,
+      "rmse": 0.1492,
+      "mape": 29.9858,
+      "n": 5271,
+      "target_col": "demand_mw",
+      "test_samples": 5271
+    },
+    {
+      "model": "seasonal_naive",
+      "horizon_minutes": 15,
+      "mae": 0.1266,
+      "rmse": 0.1976,
+      "mape": 37.6271,
+      "n": 5271,
+      "target_col": "demand_mw",
+      "test_samples": 5271
+    },
+    {
+      "model": "seasonal_naive",
+      "horizon_minutes": 30,
+      "mae": 0.1266,
+      "rmse": 0.1976,
+      "mape": 37.6271,
+      "n": 5271,
+      "target_col": "demand_mw",
+      "test_samples": 5271
+    },
+    {
+      "model": "seasonal_naive",
+      "horizon_minutes": 60,
+      "mae": 0.1266,
+      "rmse": 0.1976,
+      "mape": 37.6271,
+      "n": 5271,
+      "target_col": "demand_mw",
+      "test_samples": 5271
+    }
+  ]
+}
