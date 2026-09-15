@@ -7,6 +7,8 @@
 .env
 .env.local
 .env.production
+.kaggle/
+kaggle.json
 *.key
 *.pem
 *.p12
@@ -90,6 +92,11 @@ demo/*.mkv
 
 # ── Docker volumes / local data ───────────────────────────────────────────────
 data/
+!docs/data/
+!services/data/
+ml/datasets/raw/
+ml/datasets/kaggle_power_system/
+*.zip
 logs/
 TEAM_LEADER_PLAYBOOK.md
 GridPilot_Bob_Usage_Plan.md
