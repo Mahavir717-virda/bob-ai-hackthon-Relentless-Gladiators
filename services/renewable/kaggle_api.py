@@ -94,10 +94,26 @@ def health() -> dict[str, str]:
 
 @app.get("/status")
 def status(
-    assetId: str = Query(..., min_length=1),
-    timestamp: str = Query(..., min_length=1),
+    assetId: str | None = Query(default=None),
+    timestamp: str | None = Query(default=None),
 ) -> list[dict[str, Any]]:
+    from datetime import datetime, timezone, timedelta
+
     try:
+        # If no specific asset requested, return last-24h anomaly scan (same as /status/anomalies)
+        if not assetId:
+            now = datetime.now(timezone.utc)
+            opts: dict[str, Any] = {
+                "start": (now - timedelta(hours=24)).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "end": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            }
+            results = detectAnomalies(opts)
+            return [to_renewable_status(r) for r in results]
+
+        # Specific asset + timestamp requested
+        if not timestamp:
+            timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
         energy_type = "solar" if "_solar_" in assetId else "wind"
         root_model = Path(DEFAULT_ROOT_CAUSE_DIR) / f"kaggle_root_cause_xgb_{energy_type}.pkl"
         if not root_model.exists():
@@ -106,18 +122,56 @@ def status(
                 detail={"code": "MISSING_ROOT_CAUSE_MODEL", "message": f"Kaggle root-cause artifact unavailable for {energy_type}."},
             )
         return [to_renewable_status(getRenewableStatus(assetId, timestamp))]
+    except HTTPException:
+        raise
     except KaggleRenewableServiceError as error:
         raise _availability_error(error) from error
+    except FileNotFoundError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "code": "KAGGLE_DATASET_UNAVAILABLE",
+                "message": (
+                    "Kaggle renewable time-series dataset not found. "
+                    "Download 'time_series_60min_singleindex.csv' from the Open Power System Data "
+                    "dataset and place it in ml/datasets/kaggle_power_system/. "
+                    f"Missing file: {exc}"
+                ),
+            },
+        ) from exc
 
 
 @app.get("/status/anomalies")
 def anomalies(
-    start: str = Query(..., min_length=1),
-    end: str = Query(..., min_length=1),
+    start: str | None = Query(default=None),
+    end: str | None = Query(default=None),
     assetId: str | None = Query(default=None),
 ) -> list[dict[str, Any]]:
+    from datetime import datetime, timezone, timedelta
+
+    # Default: last 24 hours if not specified
+    now = datetime.now(timezone.utc)
+    resolved_end = end or now.strftime("%Y-%m-%dT%H:%M:%SZ")
+    resolved_start = start or (now - timedelta(hours=24)).strftime("%Y-%m-%dT%H:%M:%SZ")
+
     try:
-        results = detectAnomalies({"start": start, "end": end, "asset_id": assetId} if assetId else {"start": start, "end": end})
+        opts: dict[str, Any] = {"start": resolved_start, "end": resolved_end}
+        if assetId:
+            opts["asset_id"] = assetId
+        results = detectAnomalies(opts)
         return [to_renewable_status(result) for result in results]
     except KaggleRenewableServiceError as error:
         raise _availability_error(error) from error
+    except FileNotFoundError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "code": "KAGGLE_DATASET_UNAVAILABLE",
+                "message": (
+                    "Kaggle renewable time-series dataset not found. "
+                    "Download 'time_series_60min_singleindex.csv' from the Open Power System Data "
+                    "dataset and place it in ml/datasets/kaggle_power_system/. "
+                    f"Missing file: {exc}"
+                ),
+            },
+        ) from exc

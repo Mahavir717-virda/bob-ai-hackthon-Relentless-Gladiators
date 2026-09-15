@@ -21,7 +21,10 @@ import time
 from datetime import timedelta
 from typing import Any
 
-from ortools.linear_solver import pywraplp
+try:
+    from ortools.linear_solver import pywraplp
+except ImportError:
+    pywraplp = None
 
 from services.optimization.models import (
     OptimizationInput,
