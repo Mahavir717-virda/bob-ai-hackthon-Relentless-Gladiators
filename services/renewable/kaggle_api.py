@@ -103,16 +103,26 @@ def status(
     raw_timestamp = timestamp if isinstance(timestamp, str) else None
 
     try:
-        # If no specific asset requested, return last-24h anomaly scan for dataset end date
+        # If no specific asset requested, return status for representative assets
+        # (scanning all ~120 countries takes 18+ minutes on cold start)
         if not raw_asset_id:
-            opts: dict[str, Any] = {
-                "start": "2020-09-29T23:00:00Z",
-                "end": "2020-09-30T23:00:00Z",
-            }
-            results = detectAnomalies(opts)
-            statuses = [to_renewable_status(r) for r in results]
+            representative_assets = [
+                "NL_solar_generation_actual",
+                "NL_wind_onshore_generation_actual",
+                "DE_solar_generation_actual",
+                "DE_wind_onshore_generation_actual",
+                "FR_solar_generation_actual",
+                "FR_wind_onshore_generation_actual",
+            ]
+            statuses: list[dict[str, Any]] = []
+            for rep_asset in representative_assets:
+                try:
+                    result = getRenewableStatus(rep_asset, "2020-09-30T12:00:00Z")
+                    statuses.append(to_renewable_status(result))
+                except Exception:
+                    continue
             if not statuses:
-                # Include synthetic assets if no Kaggle anomalies in range
+                # Fallback to synthetic assets if no Kaggle results available
                 from .renewable_service import getRenewableStatus as get_synth_status
                 try:
                     statuses.append(to_renewable_status(get_synth_status("solar_park_synth_01", "2024-12-30T23:45:00+00:00")))
@@ -181,6 +191,24 @@ def anomalies(
         opts: dict[str, Any] = {"start": resolved_start, "end": resolved_end}
         if raw_asset_id:
             opts["asset_id"] = raw_asset_id
+        else:
+            # Limit default scan to representative assets to avoid 18+ minute full scan
+            representative = [
+                "NL_solar_generation_actual",
+                "NL_wind_onshore_generation_actual",
+                "DE_solar_generation_actual",
+                "DE_wind_onshore_generation_actual",
+                "FR_solar_generation_actual",
+                "FR_wind_onshore_generation_actual",
+            ]
+            all_results: list[dict[str, Any]] = []
+            for asset in representative:
+                try:
+                    single_opts = {**opts, "asset_id": asset}
+                    all_results.extend(detectAnomalies(single_opts))
+                except Exception:
+                    continue
+            return [to_renewable_status(r) for r in all_results]
         results = detectAnomalies(opts)
         return [to_renewable_status(result) for result in results]
     except KaggleRenewableServiceError as error:

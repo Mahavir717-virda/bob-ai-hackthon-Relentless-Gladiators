@@ -13,3 +13,4 @@ Video requirements:
   - Must show the application running (not just slides)
   - Should walk through at least one key feature end-to-end
   - Audio narration strongly recommended
+
