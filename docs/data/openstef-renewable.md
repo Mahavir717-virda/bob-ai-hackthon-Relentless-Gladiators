@@ -501,19 +501,74 @@ All downstream code and service responses must convert `load` (Watts) → MW by 
 
 | Item | Finding |
 |---|---|
-| **Primary dataset found locally?** | ❌ No — must download from Hugging Face |
+| **Primary dataset found locally?** | ✅ Renewable subset downloaded locally; real training remains blocked by missing denormalization metadata |
 | **Solar data available?** | ✅ Yes (after download) — `load` column in solar_park parquet files |
 | **Wind data available?** | ✅ Yes (after download) — `load` column in wind_park parquet files |
-| **Wind speed feature available?** | ⚠️ Unconfirmed — verify immediately after download |
-| **Irradiance feature available?** | ❌ No direct column — must derive |
+| **Wind speed feature available?** | ✅ Yes in the downloaded weather parquet files (`wind_speed_10m`, `wind_direction_10m`) |
+| **Irradiance feature available?** | ✅ Yes in the downloaded weather parquet files (`shortwave_radiation`, `direct_radiation`, `diffuse_radiation`, `direct_normal_irradiance`) |
 | **Curtailment field available?** | ❌ No — use heuristic flags + "uncertain" category |
 | **Operational status fields available?** | ❌ No |
 | **Timestamp resolution** | 15-minute intervals, UTC |
-| **Unit for generation** | Watts (W) — divide by 1,000,000 for MW |
-| **Most critical blocker** | Download the dataset |
+| **Unit for renewable generation** | ⚠️ Solar/wind files are explicitly normalized/anonymized; no MW or capacity mapping is published |
+| **Most critical blocker** | No legitimate denormalization mapping from normalized renewable load to MW |
 
 ---
 
+## 16. Real-Data Attempt and Deliberate Synthetic Decision
+
+### 16.1 Verification performed
+
+On 2026-09-15, the public OpenSTEF Liander 2024 release was downloaded locally
+under `ml/datasets/liander2024/` and inspected before any training attempt.
+The release contains five `solar_park` assets and five `wind_park` assets.
+The renewable load files are nested under `load_measurements/solar_park/` and
+`load_measurements/wind_park/`. Weather files are nested under the matching
+`weather_measurements/` directories and store timestamps in a DatetimeIndex
+named `timestamp` rather than as a data column.
+
+The downloaded weather data includes fields that were not confirmed in the
+original documentation: `wind_speed_10m`, `wind_direction_10m`,
+`shortwave_radiation`, `direct_radiation`, `diffuse_radiation`, and
+`direct_normal_irradiance`. No curtailment, outage, maintenance, or operational
+status field was found.
+
+### 16.2 Blocking normalization gap
+
+The downloaded README describes the solar and wind measurements as
+“normalized and anonymized.” The asset names also carry the `_normalized`
+suffix. The target YAML provides coordinates, descriptions, benchmark dates,
+and statistical `upper_limit`/`lower_limit` values, but it contains no
+installed-capacity, nameplate-capacity, or per-asset denormalization mapping.
+No such mapping exists elsewhere in the downloaded public release.
+
+Observed renewable load values confirm that they are not raw Watts: every
+inspected asset includes `-1.0` values and has maxima in small normalized
+ranges rather than plausible physical generation units. The `-1.0` value is
+not documented by the dataset card as a missing-value sentinel; it must be
+treated as invalid/masked, but masking it does not solve the missing scale
+mapping.
+
+There is therefore no legitimate way to produce MW targets for the existing
+`W_TO_MW`-based forecasting contract without fabricating an installed-capacity
+constant. That would violate the project rule against inventing numbers.
+
+### 16.3 Decision and future work
+
+Real-data forecasting and root-cause retraining were intentionally not
+performed. The synthetic-trained pipeline from M3 Chunks 2–9 remains the
+final hackathon deliverable. It has been validated end-to-end with
+`PIPELINE_HEALTHY` and preserves the existing MW-shaped service contract.
+
+Future work requires an authoritative capacity/denormalization mapping from
+the dataset publisher or asset owner. Once that mapping is available, the
+real-data path can use the verified nested-file and DatetimeIndex handling,
+mask documented invalid values, retrain on the real weather fields, and
+compare the resulting models against the retained synthetic artifacts.
+
+*Real-data inspection was completed; no real-data model artifacts were
+created. The synthetic models remain the intentional default for this
+deliverable.*
+
 *Document created by Member 3 (Renewable Intelligence Engineer) as part of M3 Chunk 1.*  
-*All findings are based on official OpenSTEF/Liander 2024 dataset documentation.*  
-*No data was modified, no model was trained, no files outside M3 boundaries were touched.*
+*The original sections record the pre-download documentation review; Section 16 records the subsequent local verification.*  
+*No real-data model was trained; the synthetic-trained pipeline remains the supported deliverable.*
