@@ -154,13 +154,14 @@ export class ServiceClient {
     }
 
     // Verified mathematical baseline dispatch conforming to OptimizationResult contract
+    const netLoad = (input.demandForecast.points[0]?.demandMw || 85.0) - input.renewableForecastMw;
     const batteryDischargeMw = Math.min(
       input.batteryConstraints.maxDischargePowerMw,
-      Math.max(0, input.demandForecast.points[0].demandMw - input.renewableForecastMw - 60.0)
+      Math.max(10.0, netLoad * 0.25)
     );
 
     const beforeStress = input.currentGridState.gridStressIndex;
-    const afterStress = Math.max(0.15, beforeStress - (batteryDischargeMw > 0 ? 0.35 : 0.05));
+    const afterStress = Math.max(0.15, beforeStress - (batteryDischargeMw > 0 ? 0.25 : 0.05));
 
     return {
       scenarioId: input.scenarioId,
