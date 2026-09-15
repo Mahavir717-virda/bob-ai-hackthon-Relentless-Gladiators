@@ -204,16 +204,16 @@ export interface Scenario {
   name: string;
   description: string;
   historicalSourceTimestamp: string;
-  injectedEvents: Array<{
+  injectedEvents?: Array<{
     timestampOffsetMinutes: number;
     eventType: string;
     severity: number;
     assetOrZoneId: string;
   }>;
-  expectedOutcome: {
-    expectedSpikeClass: string;
-    expectedAnomalyScoreMin: number;
-    expectedFeasibleOptimization: boolean;
+  expectedOutcome?: {
+    expectedSpikeClass?: string;
+    expectedAnomalyScoreMin?: number;
+    expectedFeasibleOptimization?: boolean;
   };
 }
 

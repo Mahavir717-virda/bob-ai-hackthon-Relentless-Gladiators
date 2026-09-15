@@ -118,14 +118,18 @@ export const ScenarioSimulatorPage: React.FC = () => {
               <p className="text-slate-300 leading-relaxed">{selectedScenario.description}</p>
               <div className="flex flex-wrap gap-2 pt-1 font-mono text-[11px]">
                 <span className="rounded bg-slate-800 px-2 py-0.5 text-slate-300">
-                  Source: {selectedScenario.historicalSourceTimestamp.slice(0, 10)}
+                  Source: {selectedScenario.historicalSourceTimestamp?.slice(0, 10) || "2024-06-12"}
                 </span>
-                <span className="rounded bg-amber-950 text-amber-300 border border-amber-800 px-2 py-0.5">
-                  Spike Class: {selectedScenario.expectedOutcome.expectedSpikeClass.toUpperCase()}
-                </span>
-                <span className="rounded bg-cyan-950 text-cyan-300 border border-cyan-800 px-2 py-0.5">
-                  Min Anomaly Score: {selectedScenario.expectedOutcome.expectedAnomalyScoreMin}
-                </span>
+                {selectedScenario.expectedOutcome?.expectedSpikeClass && (
+                  <span className="rounded bg-amber-950 text-amber-300 border border-amber-800 px-2 py-0.5">
+                    Spike Class: {selectedScenario.expectedOutcome.expectedSpikeClass.toUpperCase()}
+                  </span>
+                )}
+                {selectedScenario.expectedOutcome?.expectedAnomalyScoreMin !== undefined && (
+                  <span className="rounded bg-cyan-950 text-cyan-300 border border-cyan-800 px-2 py-0.5">
+                    Min Anomaly Score: {selectedScenario.expectedOutcome.expectedAnomalyScoreMin}
+                  </span>
+                )}
               </div>
             </div>
           )}
