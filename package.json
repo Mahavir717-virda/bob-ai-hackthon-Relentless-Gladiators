@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "start:api": "node --experimental-strip-types apps/api/src/index.ts",
+    "start:services": "powershell -ExecutionPolicy Bypass -File ./scripts/start_python_services.ps1",
     "start:web": "npm --prefix apps/web run dev",
     "build:web": "npm --prefix apps/web run build",
     "test": "npx tsx --test tests/integration/api-gateway.test.ts tests/integration/contracts.test.ts tests/integration/grid-state-aggregator.test.ts tests/integration/llm-provider.test.ts tests/integration/operator-brief.test.ts tests/integration/operator-copilot.test.ts tests/integration/renewable-optimization-integration.test.ts",

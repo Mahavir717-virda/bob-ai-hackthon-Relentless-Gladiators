@@ -123,9 +123,25 @@ def solve(payload: dict = Body(...)) -> dict:
             scalar = float(val) if val is not None else default
             return [scalar] * n
 
-        demand_mw       = to_list(payload.get("demandMw"),           n_periods, 85.0)
-        solar_mw        = to_list(payload.get("solarMw"),            n_periods, 0.0)
-        wind_mw         = to_list(payload.get("windMw"),             n_periods, 0.0)
+        raw_demand = payload.get("demandMw")
+        if raw_demand is None:
+            df_points = (payload.get("demandForecast") or {}).get("points", [])
+            if df_points:
+                raw_demand = [float(p.get("predictedDemandMw", 85.0)) for p in df_points]
+            elif "currentGridState" in payload:
+                raw_demand = float(payload["currentGridState"].get("demandMw", 85.0))
+
+        raw_solar = payload.get("solarMw")
+        if raw_solar is None and "currentGridState" in payload:
+            raw_solar = float(payload["currentGridState"].get("solarGenerationMw", 0.0))
+
+        raw_wind = payload.get("windMw")
+        if raw_wind is None and "currentGridState" in payload:
+            raw_wind = float(payload["currentGridState"].get("windGenerationMw", 0.0))
+
+        demand_mw       = to_list(raw_demand,                        n_periods, 85.0)
+        solar_mw        = to_list(raw_solar,                         n_periods, 0.0)
+        wind_mw         = to_list(raw_wind,                          n_periods, 0.0)
         other_gen_mw    = to_list(payload.get("otherGenerationMw"),  n_periods, 0.0)
         ev_demand_mw    = to_list(payload.get("evDemandMw"),         n_periods, 0.0)
         ind_demand_mw   = to_list(payload.get("industrialDemandMw"), n_periods, 0.0)

@@ -459,6 +459,7 @@ class OptimizationMetrics:
             "renewableMw": round(self.renewable_mw, 2),
             "curtailmentMw": round(self.curtailment_mw, 2),
             "gridStress": round(self.grid_stress, 4),
+            "gridStressIndex": round(self.grid_stress, 4),
         }
 
 
@@ -498,16 +499,33 @@ class OptimizationResult:
     solve_time_seconds: float = 0.0
     diagnostics: Optional[InfeasibilityDiagnostics] = None
 
+    def _zero_metrics(self) -> "OptimizationMetrics":
+        """Return a zeroed metrics object used when after-metrics are unavailable."""
+        return OptimizationMetrics(
+            demand_mw=0.0,
+            renewable_mw=0.0,
+            curtailment_mw=0.0,
+            grid_stress=0.0,
+        )
+
     def to_dict(self) -> dict[str, Any]:
+        # Map internal status to the SolverStatus enum expected by the TS contract.
+        # "optimal" / "feasible" / "infeasible" are the only valid values.
+        solver_status = "optimal" if self.status == "feasible" else "infeasible"
+
+        # before/after are required (non-optional) in the contract; never emit null.
+        before_dict = self.before.to_dict() if self.before else self._zero_metrics().to_dict()
+        after_dict = self.after.to_dict() if self.after else self._zero_metrics().to_dict()
+
         result: dict[str, Any] = {
             "scenarioId": self.scenario_id,
             "status": self.status,
+            "solverStatus": solver_status,
             "actions": [a.to_dict() for a in self.actions],
-            "before": self.before.to_dict() if self.before else None,
-            "after": self.after.to_dict() if self.after else None,
+            "before": before_dict,
+            "after": after_dict,
             "objectiveValue": round(self.objective_value, 4),
-            "solver": self.solver_name,
-            "solveTimeSeconds": round(self.solve_time_seconds, 4),
+            "solveDurationMs": round(self.solve_time_seconds * 1000),
         }
         if self.diagnostics:
             result["diagnostics"] = self.diagnostics.to_dict()

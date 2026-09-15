@@ -11,9 +11,13 @@ export interface GridState {
   demandMw: number;
   solarGenerationMw: number;
   windGenerationMw: number;
+  netLoadMw: number;
   batterySocPercent: number;
+  batteryPowerMw: number;
   curtailmentMw: number;
+  gridFrequencyHz: number;
   gridStressIndex: number;
+  activeAlertsCount: number;
 }
 
 export interface OperationalSnapshot {

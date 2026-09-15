@@ -38,6 +38,18 @@ export const OptimizationCenterPage: React.FC = () => {
       windMw = Math.round(windMw * 100) / 100;
       expectedMw = Math.round(expectedMw * 100) / 100;
 
+      // Remap spikeRisk.level "warning" → "moderate" to match the contract's
+      // valid set ["normal", "moderate", "severe"] expected by validateDemandForecast.
+      const normalizedForecast = {
+        ...demandForecast,
+        spikeRisk: {
+          ...demandForecast.spikeRisk,
+          level: demandForecast.spikeRisk.level === "warning"
+            ? "moderate"
+            : demandForecast.spikeRisk.level,
+        },
+      };
+
       const payload = {
         scenarioId: `SOLVER_RUN_${Date.now()}`,
         targetTimestamp: demandForecast.points[0]?.timestamp || new Date().toISOString(),
@@ -48,8 +60,11 @@ export const OptimizationCenterPage: React.FC = () => {
           windGenerationMw: windMw,
           netLoadMw: Math.round((gridState.demandMw - (solarMw + windMw)) * 100) / 100,
           batterySocPercent: overrides?.batterySoc ?? batterySoc,
+          batteryPowerMw: gridState.batteryPowerMw ?? 0,
+          gridFrequencyHz: gridState.gridFrequencyHz ?? 50.0,
+          activeAlertsCount: gridState.activeAlertsCount ?? 0,
         },
-        demandForecast,
+        demandForecast: normalizedForecast,
         renewableForecastMw: expectedMw,
         batteryConstraints: {
           maxCapacityMwh: 40.0,

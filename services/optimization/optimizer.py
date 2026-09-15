@@ -617,4 +617,8 @@ class GridOptimizer:
         action_start = start_time + timedelta(minutes=first_active * period_minutes)
         action_end = start_time + timedelta(minutes=(last_active + 1) * period_minutes)
 
-        return action_start.isoformat() + "Z", action_end.isoformat() + "Z"
+        # Use strftime to produce a clean UTC ISO string without timezone offset suffix.
+        # datetime.isoformat() can emit "+00:00" for tz-aware datetimes, which combined
+        # with the appended "Z" yields an invalid timestamp that fails Date.parse().
+        fmt = "%Y-%m-%dT%H:%M:%SZ"
+        return action_start.strftime(fmt), action_end.strftime(fmt)
