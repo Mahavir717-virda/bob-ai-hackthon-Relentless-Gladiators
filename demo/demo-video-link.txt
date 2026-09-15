@@ -1,4 +1,4 @@
-https://youtu.be/GridPilot-RelentlessGladiators-Demo
+https://drive.google.com/file/d/1K7qgwz-UnAj8h-hsSBhw5VoDUDPVz4Lc/view?usp=sharing
 
 Replace the URL above with a link to your demo video.
 
@@ -13,3 +13,4 @@ Video requirements:
   - Must show the application running (not just slides)
   - Should walk through at least one key feature end-to-end
   - Audio narration strongly recommended
+
