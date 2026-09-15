@@ -22,7 +22,7 @@ export class OllamaProvider implements LLMProvider {
   constructor(config: OllamaConfig = {}) {
     this.baseUrl = config.baseUrl || process.env.OLLAMA_BASE_URL || "http://127.0.0.1:11434";
     this.modelId = config.modelId || process.env.OLLAMA_MODEL || "qwen2.5:1.5b";
-    this.defaultTimeoutMs = config.defaultTimeoutMs || 30000;
+    this.defaultTimeoutMs = config.defaultTimeoutMs || 90000;
   }
 
   getProviderName(): string {
