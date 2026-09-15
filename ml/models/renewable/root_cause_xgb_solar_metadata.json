@@ -3,7 +3,7 @@
   "task": "percentage_deviation_association",
   "asset_type": "solar",
   "version": "1.0.0",
-  "trained_at": "2026-09-15T10:50:31.587921+00:00",
+  "trained_at": "2026-09-15T13:28:59.961113+00:00",
   "features": [
     "cloud_cover",
     "temperature_2m",

@@ -31,6 +31,28 @@ logger = logging.getLogger(__name__)
 # Real data loader (OpenSTEF Liander 2024 parquet files)
 # ---------------------------------------------------------------------------
 
+def _dataset_file(dataset_dir: str | Path, folder: str, asset_name: str) -> Path:
+    """Resolve a dataset asset in either flat or type-partitioned layouts."""
+    root = Path(dataset_dir) / folder
+    flat_path = root / f"{asset_name}.parquet"
+    if flat_path.exists():
+        return flat_path
+    matches = list(root.rglob(f"{asset_name}.parquet")) if root.exists() else []
+    if len(matches) == 1:
+        return matches[0]
+    if len(matches) > 1:
+        raise ValueError(f"Multiple {folder} files found for asset {asset_name!r}: {matches}")
+    raise FileNotFoundError(f"{folder} file not found for asset {asset_name!r} under {root}")
+
+
+def _ensure_timestamp_column(df: pd.DataFrame) -> pd.DataFrame:
+    """Expose parquet index timestamps as the standard timestamp column."""
+    result = df.reset_index() if "timestamp" not in df.columns else df.copy()
+    if "timestamp" not in result.columns:
+        raise ValueError("Dataset file has no timestamp column or DatetimeIndex")
+    result["timestamp"] = pd.to_datetime(result["timestamp"], utc=True)
+    return result
+
 def load_openstef_load(
     dataset_dir: str | Path,
     asset_name: str,
@@ -49,10 +71,11 @@ def load_openstef_load(
     DataFrame with columns ['timestamp', 'load', 'available_at']
     Raises FileNotFoundError if the dataset has not been downloaded.
     """
-    path = Path(dataset_dir) / "load_measurements" / f"{asset_name}.parquet"
-    if not path.exists():
+    try:
+        path = _dataset_file(dataset_dir, "load_measurements", asset_name)
+    except (FileNotFoundError, ValueError):
         raise FileNotFoundError(
-            f"Load measurements not found: {path}\n"
+            f"Load measurements not found for asset: {asset_name!r}\n"
             "Download the dataset first:\n"
             "  from huggingface_hub import snapshot_download\n"
             "  snapshot_download('OpenSTEF/liander2024-energy-forecasting-benchmark',\n"
@@ -62,7 +85,7 @@ def load_openstef_load(
     # Normalise timestamp column name
     if "datetime" in df.columns and "timestamp" not in df.columns:
         df = df.rename(columns={"datetime": "timestamp"})
-    df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
+    df = _ensure_timestamp_column(df)
     logger.info("Loaded %d rows from %s", len(df), path)
     return df
 
@@ -81,13 +104,11 @@ def load_openstef_weather(
         realistic back-testing without look-ahead bias).
     """
     folder = "weather_forecasts_versioned" if versioned else "weather_measurements"
-    path = Path(dataset_dir) / folder / f"{asset_name}.parquet"
-    if not path.exists():
-        raise FileNotFoundError(f"Weather data not found: {path}")
+    path = _dataset_file(dataset_dir, folder, asset_name)
     df = pd.read_parquet(path)
     if "datetime" in df.columns and "timestamp" not in df.columns:
         df = df.rename(columns={"datetime": "timestamp"})
-    df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
+    df = _ensure_timestamp_column(df)
     logger.info("Loaded weather %d rows from %s", len(df), path)
     return df
 
