@@ -8,4 +8,6 @@ export * from "./Recommendation.ts";
 export * from "./Scenario.ts";
 export * from "./AgentContext.ts";
 export * from "./AggregatedGridSnapshot.ts";
+export * from "./OperatorBrief.ts";
+
 

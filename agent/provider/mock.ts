@@ -42,8 +42,13 @@ export class MockLLMProvider implements LLMProvider {
       const spikeProb = ctx.demandForecast?.spikeRisk?.probability ?? ctx.forecastDemand?.spikeProbability ?? 0.12;
 
       const actions = ctx.optimizationResult?.actions || [];
-      const hasAnomaly = ctx.renewableStatuses?.some((r: any) => r.anomaly) ?? false;
-      const anomalyEvidence = ctx.renewableStatuses?.find((r: any) => r.anomaly)?.likelyRootCause?.evidence ?? "No asset performance anomalies detected.";
+      const anomalyList = (ctx.renewableAnomalies || ctx.renewableStatuses || []) as any[];
+      const hasAnomaly = anomalyList.some((r) => r.anomaly) || anomalyList.length > 0;
+      const anomalyEvidence =
+        ctx.rootCauses?.[0]?.evidence ||
+        anomalyList.find((r) => r.likelyRootCause?.evidence)?.likelyRootCause?.evidence ||
+        (hasAnomaly ? "Asset underperformance detected; awaiting diagnostic root cause data." : "No asset performance anomalies detected.");
+
 
       responseText = [
         "## 1. Current Situation",
