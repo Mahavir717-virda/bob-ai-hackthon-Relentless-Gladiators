@@ -27,7 +27,7 @@ export const AICopilotPage: React.FC = () => {
       id: "msg_welcome",
       sender: "copilot",
       timestamp: new Date().toISOString(),
-      text: "GridPilot AI Operator Copilot active. I am connected via IBM Bob and watsonx.ai to SCADA telemetry, LightGBM demand forecaster, Isolation Forest anomaly detector, and the OR-Tools MILP optimizer. How can I assist with grid operations?",
+      text: "GridPilot AI Operator Copilot active. I am powered by local Qwen 2.5 and IBM Bob MCP tools connected to SCADA telemetry, LightGBM demand forecaster, Isolation Forest anomaly detector, and the OR-Tools MILP optimizer. How can I assist with grid operations?",
     },
   ]);
   const [inputText, setInputText] = useState("");
@@ -89,10 +89,10 @@ export const AICopilotPage: React.FC = () => {
           </div>
           <div>
             <h3 className="text-xs font-bold text-white tracking-wide">
-              IBM Bob & watsonx.ai Command Copilot
+              IBM Bob Command Copilot (Local Qwen 2.5)
             </h3>
             <span className="text-[11px] text-slate-400">
-              Granite 3.0 / Llama 3 with 8 Analytical MCP Tools & Dispatch Guardrails
+              Qwen 2.5 / Ollama with 8 Analytical MCP Tools & Dispatch Guardrails
             </span>
           </div>
         </div>

@@ -16,7 +16,8 @@
     "renewable-energy",
     "load-forecasting",
     "ibm-bob",
-    "watsonx"
+    "ollama",
+    "qwen"
   ],
   "author": "Relentless Gladiators",
   "license": "Apache-2.0",

@@ -3,12 +3,9 @@ import assert from "node:assert/strict";
 
 import {
   MockLLMProvider,
-  WatsonxProvider,
   OllamaProvider,
   getLLMProvider,
   resetLLMProvider,
-  WatsonxAuthError,
-  WatsonxTimeoutError,
   type LLMProvider,
 } from "../../agent/provider/index.ts";
 
@@ -91,58 +88,17 @@ test("LLM Provider Abstraction Suite", async (t) => {
     assert.ok(response.durationMs >= 0);
   });
 
-  await t.test("WatsonxProvider configuration check and authentication guard", async () => {
-    // When unconfigured
-    const unconfigured = new WatsonxProvider({ apiKey: "", projectId: "" });
-    assert.equal(unconfigured.isConfigured(), false);
-    assert.equal(unconfigured.getProviderName(), "ibm-watsonx");
-    assert.equal(unconfigured.getModelId(), "ibm/granite-3-8b-instruct");
-
-    await assert.rejects(
-      async () => {
-        await unconfigured.generate({
-          systemPrompt: "test",
-          userPrompt: "test",
-        });
-      },
-      WatsonxAuthError
-    );
-  });
-
-  await t.test("WatsonxProvider timeout handling", async () => {
-    const provider = new WatsonxProvider({
-      apiKey: "dummy_key",
-      projectId: "dummy_project",
-      url: "http://10.255.255.1", // Non-routable address to force timeout
-    });
-
-    await assert.rejects(
-      async () => {
-        await provider.generate({
-          systemPrompt: "test",
-          userPrompt: "test",
-          timeoutMs: 50, // Ultra short timeout
-        });
-      },
-      (err: any) => err instanceof WatsonxTimeoutError || err instanceof WatsonxAuthError
-    );
-  });
-
-  await t.test("LLM Factory resolves provider and supports custom override", () => {
-    // Unconfigured environment falls back to MockLLMProvider
-    const defaultProvider = getLLMProvider();
-    assert.equal(defaultProvider.getProviderName(), "mock-provider");
-
-    // Custom override
-    const custom = new MockLLMProvider("custom-granite-test");
-    const active = getLLMProvider(custom);
-    assert.equal(active.getModelId(), "custom-granite-test");
-  });
-
   await t.test("OllamaProvider conforms to LLMProvider interface", () => {
     const provider = new OllamaProvider({ modelId: "qwen2.5:1.5b" });
     assert.equal(provider.getProviderName(), "ollama");
     assert.equal(provider.getModelId(), "qwen2.5:1.5b");
     assert.equal(provider.isConfigured(), true);
+  });
+
+  await t.test("LLM Factory resolves provider and supports custom override", () => {
+    // Custom override
+    const custom = new MockLLMProvider("custom-qwen-test");
+    const active = getLLMProvider(custom);
+    assert.equal(active.getModelId(), "custom-qwen-test");
   });
 });

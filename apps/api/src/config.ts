@@ -40,11 +40,10 @@ export interface AppConfig {
     renewableUrl: string;
     optimizationUrl: string;
   };
-  watsonx: {
-    url: string;
-    apiKey?: string;
-    projectId?: string;
-    modelId: string;
+  llm: {
+    provider: string;
+    ollamaBaseUrl: string;
+    ollamaModel: string;
   };
 }
 
@@ -61,11 +60,10 @@ export function loadConfig(): AppConfig {
       renewableUrl: process.env.RENEWABLE_SERVICE_URL || "http://localhost:8003",
       optimizationUrl: process.env.OPTIMIZATION_SERVICE_URL || "http://localhost:8004",
     },
-    watsonx: {
-      url: process.env.WATSONX_URL || "https://us-south.ml.cloud.ibm.com",
-      apiKey: process.env.WATSONX_API_KEY,
-      projectId: process.env.WATSONX_PROJECT_ID,
-      modelId: process.env.WATSONX_MODEL_ID || "ibm/granite-3-8b-instruct",
+    llm: {
+      provider: process.env.LLM_PROVIDER || "ollama",
+      ollamaBaseUrl: process.env.OLLAMA_BASE_URL || "http://127.0.0.1:11434",
+      ollamaModel: process.env.OLLAMA_MODEL || "qwen2.5:1.5b",
     },
   };
 }

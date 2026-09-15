@@ -232,7 +232,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({ onNavigate }) => {
               </h3>
             </div>
             <p className="text-xs text-slate-300 leading-relaxed mb-4">
-              Trigger OR-Tools Mixed-Integer Linear Programming solver to compute optimal BESS discharge, or synthesize the 8-part operator incident brief via IBM watsonx.ai.
+              Trigger OR-Tools Mixed-Integer Linear Programming solver to compute optimal BESS discharge, or synthesize the 8-part operator incident brief via local Qwen 2.5 LLM.
             </p>
 
             <div className="space-y-2 mb-4">
