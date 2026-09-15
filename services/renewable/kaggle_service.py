@@ -243,7 +243,10 @@ def detectAnomalies(
     asset_ids = [timeRange["asset_id"]] if timeRange.get("asset_id") else list(schema.generation_columns)
     statuses: list[dict[str, Any]] = []
     for asset_id in asset_ids:
-        frame = _asset_frame(asset_id, Path(dataset_dir), Path(forecast_dir))
+        try:
+            frame = _asset_frame(asset_id, Path(dataset_dir), Path(forecast_dir))
+        except KaggleRenewableServiceError:
+            continue
         selected = frame.loc[frame["timestamp"].between(start, end)]
         for _, row in selected.iterrows():
             anomaly_row = _anomaly_row(row, Path(anomaly_dir))

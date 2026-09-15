@@ -78,7 +78,7 @@ export class ServiceClient {
 
     const url = `${this.config.services.renewableUrl}${path}?${params.toString()}`;
     try {
-      const resp = await fetch(url, { signal: AbortSignal.timeout(2000) });
+      const resp = await fetch(url, { signal: AbortSignal.timeout(15000) });
       if (resp.ok) {
         return (await resp.json()) as RenewableStatus[];
       }

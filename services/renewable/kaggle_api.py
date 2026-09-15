@@ -99,29 +99,44 @@ def status(
 ) -> list[dict[str, Any]]:
     from datetime import datetime, timezone, timedelta
 
+    raw_asset_id = assetId if isinstance(assetId, str) else None
+    raw_timestamp = timestamp if isinstance(timestamp, str) else None
+
     try:
-        # If no specific asset requested, return last-24h anomaly scan (same as /status/anomalies)
-        if not assetId:
-            now = datetime.now(timezone.utc)
+        # If no specific asset requested, return last-24h anomaly scan for dataset end date
+        if not raw_asset_id:
             opts: dict[str, Any] = {
-                "start": (now - timedelta(hours=24)).strftime("%Y-%m-%dT%H:%M:%SZ"),
-                "end": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "start": "2020-09-29T23:00:00Z",
+                "end": "2020-09-30T23:00:00Z",
             }
             results = detectAnomalies(opts)
-            return [to_renewable_status(r) for r in results]
+            statuses = [to_renewable_status(r) for r in results]
+            if not statuses:
+                # Include synthetic assets if no Kaggle anomalies in range
+                from .renewable_service import getRenewableStatus as get_synth_status
+                try:
+                    statuses.append(to_renewable_status(get_synth_status("solar_park_synth_01", "2024-12-30T23:45:00+00:00")))
+                    statuses.append(to_renewable_status(get_synth_status("wind_park_synth_01", "2024-12-30T23:45:00+00:00")))
+                except Exception:
+                    pass
+            return statuses
+
+        if raw_asset_id in {"solar_park_synth_01", "wind_park_synth_01"}:
+            from .renewable_service import getRenewableStatus as get_synth_status
+            target_ts = raw_timestamp or "2024-12-30T23:45:00+00:00"
+            return [to_renewable_status(get_synth_status(raw_asset_id, target_ts))]
 
         # Specific asset + timestamp requested
-        if not timestamp:
-            timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        target_ts = raw_timestamp or "2020-09-30T23:00:00Z"
 
-        energy_type = "solar" if "_solar_" in assetId else "wind"
+        energy_type = "solar" if "_solar_" in raw_asset_id else "wind"
         root_model = Path(DEFAULT_ROOT_CAUSE_DIR) / f"kaggle_root_cause_xgb_{energy_type}.pkl"
         if not root_model.exists():
             raise HTTPException(
                 status_code=503,
                 detail={"code": "MISSING_ROOT_CAUSE_MODEL", "message": f"Kaggle root-cause artifact unavailable for {energy_type}."},
             )
-        return [to_renewable_status(getRenewableStatus(assetId, timestamp))]
+        return [to_renewable_status(getRenewableStatus(raw_asset_id, target_ts))]
     except HTTPException:
         raise
     except KaggleRenewableServiceError as error:
@@ -149,15 +164,23 @@ def anomalies(
 ) -> list[dict[str, Any]]:
     from datetime import datetime, timezone, timedelta
 
-    # Default: last 24 hours if not specified
-    now = datetime.now(timezone.utc)
-    resolved_end = end or now.strftime("%Y-%m-%dT%H:%M:%SZ")
-    resolved_start = start or (now - timedelta(hours=24)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    raw_start = start if isinstance(start, str) else None
+    raw_end = end if isinstance(end, str) else None
+    raw_asset_id = assetId if isinstance(assetId, str) else None
+
+    if not raw_end:
+        # Default end to latest dataset timestamp (2020-09-30) rather than current live clock
+        resolved_end = "2020-09-30T23:00:00Z"
+        resolved_start = "2020-09-29T23:00:00Z"
+    else:
+        now = datetime.now(timezone.utc)
+        resolved_end = raw_end
+        resolved_start = raw_start or (now - timedelta(hours=24)).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     try:
         opts: dict[str, Any] = {"start": resolved_start, "end": resolved_end}
-        if assetId:
-            opts["asset_id"] = assetId
+        if raw_asset_id:
+            opts["asset_id"] = raw_asset_id
         results = detectAnomalies(opts)
         return [to_renewable_status(result) for result in results]
     except KaggleRenewableServiceError as error:
