@@ -1,45 +1,52 @@
 team:
-  name: "Relentless Gladiators"              # Fill in your team name
-  track: "AI"                                # Choose: AI | DevOps | Sustainability | Open
+  name: "Relentless Gladiators"
+  track: "AI"
   lead:
-    name: "Mahavir Virda"                        # Team lead name
-    email: "24ce142@charusat.edu.in"          # Team lead email
+    name: "Mahavir Virda"
+    email: "24ce142@charusat.edu.in"
   members:
-    - name: ""
+    - name: "Deep Pathak"
       email: "24ce095@charusat.edu.in"
-    - name: "Member 2"
+    - name: "Savan Patel"
       email: "24aiml060@charusat.edu.in"
-    - name: "Member 3"
+    - name: "Tirth Patel"
       email: "24aiml046@charusat.edu.in"
 
 submission:
-  title: "Grid Load Optimisation & Renewable EnergyPerformance Advisor"                # e.g., "AI-Powered Analytics Dashboard"
+  title: "Grid Load Optimisation & Renewable Energy Performance Advisor"
   
   problem_statement: >
-    Describe the real-world problem your project addresses.
+    Power grid operators struggle with high-frequency renewable volatility, sudden demand spikes,
+    and inefficient asset curtailment. Existing monitoring systems lack unified predictive diagnostics
+    and constraint-aware mathematical optimization, leading to costly grid stress and clean energy waste.
   
   solution_summary: >
-    Describe your solution and how it addresses the problem.
+    GridPilot AI combines LightGBM demand/renewable forecasting, XGBoost spike detection,
+    and Isolation Forest anomaly tracking with Google OR-Tools MILP optimization. It synthesizes actionable
+    15-minute operator briefs and natural language actions via IBM watsonx.ai and IBM Bob MCP tools
+    to minimize curtailment and ensure grid stability.
   
   key_features:
-    - "Feature 1 description"
-    - "Feature 2 description"
-    - "Feature 3 description"
-    - "Feature 4 description"
-    - "Feature 5 description"
+    - "15/30/60-minute electricity demand and solar/wind generation forecasting using LightGBM"
+    - "Multi-class demand spike detection with XGBoost and Isolation Forest anomaly tracking"
+    - "SHAP explainability for renewable asset underperformance and root-cause analysis"
+    - "Constraint-aware battery dispatch and flexible load shifting using Google OR-Tools MILP"
+    - "Automated 8-part operator briefs and interactive command copilot via IBM Bob and watsonx.ai"
   
   tech_stack:
-    languages: ["Python", "JavaScript"]
-    frameworks: ["FastAPI", "React"]
-    ibm_technologies: ["watsonx.ai"]
+    languages: ["Python", "TypeScript", "JavaScript"]
+    frameworks: ["FastAPI", "React", "Express"]
+    ibm_technologies: ["watsonx.ai", "IBM Bob", "Granite 3.0"]
     databases: ["PostgreSQL"]
-    other: ["Docker", "GitHub Actions"]
+    other: ["Google OR-Tools", "LightGBM", "XGBoost", "SHAP", "Docker"]
 
   what_we_are_most_proud_of: >
-    Describe your strongest achievement.
+    The deterministic coupling of mathematical optimization (OR-Tools) with AI forecasting and IBM Bob MCP
+    tooling—ensuring the LLM explains mathematically verified dispatch decisions rather than hallucinating physical actions.
   
   known_limitations: >
-    List any known limitations or incomplete features.
+    Currently optimized for 15-minute time intervals up to 60-minute horizons based on OpenSTEF Liander grid topology.
+    Day-ahead 24-hour dispatch and multi-regional interconnects are planned for future iterations.
 
 artifacts:
   source_code: "src/"

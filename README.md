@@ -1,6 +1,6 @@
-# 🚀 [Your Project Title Here]
+# 🚀 GridPilot AI — Grid Load Optimisation & Renewable Energy Performance Advisor
 
-> ⚠️ **Replace everything in `[ ]` brackets with your actual content before submission.**
+> AI-driven decision-support platform enabling power grid operators to forecast renewable volatility, detect demand spikes, and mathematically optimize battery dispatch and curtailment mitigation.
 
 ---
 
@@ -8,36 +8,32 @@
 
 | Field | Value |
 |---|---|
-| **Team Name** | [Your Team Name] |
-| **Track** | [AI / DevOps / Sustainability / Open] |
-| **Team Lead** | [Name] — [email@ibm.com] |
-| **Members** | [Name 1], [Name 2], [Name 3] |
+| **Team Name** | Relentless Gladiators |
+| **Track** | AI |
+| **Team Lead** | Mahavir Virda — 24ce142@charusat.edu.in |
+| **Members** | Deep Patel (24ce095@charusat.edu.in), Savan Patel (24aiml060@charusat.edu.in), Tirth Patel (24aiml046@charusat.edu.in) |
 
 ---
 
 ## 🎯 Problem Statement
 
-> In 2–3 sentences: What problem does your project solve? Who experiences this problem?
-
-[Describe the real-world problem your project addresses. Be specific about who the user is and what pain point they face.]
+Power grid operators face unprecedented volatility with renewable integration: sudden demand surges, weather-driven renewable drops, and inefficient asset curtailment. Traditional SCADA and monitoring systems lack unified predictive diagnostics and constraint-aware mathematical optimization, causing critical grid stress and clean energy waste.
 
 ---
 
 ## 💡 Solution
 
-> In 2–3 sentences: What did you build? How does it solve the problem above?
-
-[Describe your solution clearly. Explain the core mechanism — what makes it work.]
+GridPilot AI is an operator decision-support system coupling machine learning forecasting (LightGBM demand, solar, and wind models; XGBoost spike detection; Isolation Forest anomaly tracking) with Google OR-Tools Mixed-Integer Linear Programming (MILP). It translates complex grid telemetry into actionable 15-minute operator briefs and interactive natural language actions powered by IBM watsonx.ai and IBM Bob.
 
 ---
 
 ## ✨ Key Features
 
-- **Feature 1:** [Brief description — e.g., "Real-time anomaly detection using watsonx.ai"]
-- **Feature 2:** [Brief description]
-- **Feature 3:** [Brief description]
-- **Feature 4:** [Optional]
-- **Feature 5:** [Optional]
+- **High-Frequency Forecasting:** 15, 30, and 60-minute electricity demand, solar generation, and wind output forecasting using LightGBM.
+- **Spike & Anomaly Diagnostics:** Multi-class demand spike detection via XGBoost and asset anomaly tracking via Isolation Forest with SHAP root-cause explainability.
+- **Constraint-Aware Optimization:** Mathematical MILP optimization using Google OR-Tools for battery energy storage system (BESS) dispatch and industrial flexible load shifting.
+- **IBM Bob Shell & watsonx.ai Integration:** Custom Model Context Protocol (MCP) server enabling IBM Bob to query grid telemetry, run optimizations, and synthesize 8-part operator briefs.
+- **Interactive Operator Command Center:** Real-time visual telemetry, before/after load balancing comparison, and decision-support dashboard.
 
 ---
 
@@ -45,18 +41,19 @@
 
 | Category | Technologies |
 |---|---|
-| **Languages** | [e.g., Python, TypeScript] |
-| **Frameworks** | [e.g., FastAPI, React] |
-| **IBM Technologies** | [e.g., watsonx.ai, IBM Bob, IBM Cloud] |
-| **Databases** | [e.g., PostgreSQL, Redis] |
-| **Other** | [e.g., Docker, GitHub Actions] |
+| **Languages** | Python, TypeScript, JavaScript |
+| **Frameworks** | FastAPI, React, Express, Node.js |
+| **IBM Technologies** | IBM watsonx.ai (Granite 3.0), IBM Bob (BobShell CLI) |
+| **Databases & Math** | PostgreSQL, Google OR-Tools (MILP / SCIP) |
+| **ML & Analytics** | LightGBM, XGBoost, Scikit-learn, SHAP, Pandas |
+| **Other** | Docker, Git, Model Context Protocol (MCP) |
 
 ---
 
 ## 📁 Repository Structure
 
 ```
-├── src/                  # All source code
+├── src/                  # All source code (FastAPI gateway, ML models, optimizer, MCP server)
 ├── docs/                 # Written documentation
 │   ├── problem-statement.md
 │   ├── solution-overview.md
@@ -66,6 +63,7 @@
 │   ├── screenshots/      # App screenshots
 │   └── demo-video-link.txt  # Link to demo video
 ├── presentation/         # Slide deck
+├── agent.md              # AI agent operational guidelines and contracts
 └── submission.yaml       # Structured submission metadata
 ```
 
@@ -73,22 +71,19 @@
 
 ## ⚡ How to Run
 
-> **Copy these exact steps from your [`docs/setup-guide.md`](docs/setup-guide.md)**
-
 ```bash
 # 1. Clone the repo
-git clone https://github.com/[your-repo].git
-cd [your-repo]
+git clone https://github.com/Mahavir717-virda/bob-ai-hackthon-Relentless-Gladiators.git
+cd bob-ai-hackthon-Relentless-Gladiators
 
 # 2. Install dependencies
-[your install command here]
+pip install -r src/requirements.txt
 
 # 3. Configure environment
-cp .env.example .env
-# Edit .env with your values
+cp src/.env.example .env
 
-# 4. Run the project
-[your run command here]
+# 4. Run the project API
+uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 ---
@@ -100,22 +95,18 @@ cp .env.example .env
 | 📹 Demo Video | [See demo/demo-video-link.txt](demo/demo-video-link.txt) |
 | 🌐 Live Demo | [See demo/live-demo-url.txt](demo/live-demo-url.txt) |
 | 🖼️ Screenshots | [See demo/screenshots/](demo/screenshots/) |
-| 📊 Presentation | [See presentation/slides.pdf](presentation/) |
+| 📊 Presentation | [See presentation/](presentation/) |
 
 ---
 
 ## ⚠️ Known Limitations
 
-> Be honest — judges appreciate transparency over overclaiming.
-
-- [Limitation 1: e.g., "Authentication is mocked — not production-ready"]
-- [Limitation 2: e.g., "Only tested on Chrome"]
-- [Limitation 3: e.g., "Feature X is scaffolded but not fully implemented"]
+- Real-time resolution is currently scoped to 15-minute intervals up to 60-minute horizons based on OpenSTEF Liander topology.
+- Grid topology assumes single-zone substation balancing; multi-regional transactive energy trading is planned for future phases.
+- Hardware battery telemetry is simulated using empirical battery degradation models.
 
 ---
 
 ## 🏅 What We're Most Proud Of
 
-[Tell the judges what part of your submission is strongest and worth paying close attention to.]
-
----
+The clean separation of concerns between predictive machine learning, mathematical constraint optimization (OR-Tools), and communicative generative AI (IBM Bob & watsonx.ai). The LLM never hallucinates dispatch numbers; it explains mathematically verified and physically feasible dispatch recommendations.
