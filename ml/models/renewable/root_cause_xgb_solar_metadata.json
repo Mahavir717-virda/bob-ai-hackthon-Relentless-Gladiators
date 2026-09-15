@@ -1,0 +1,37 @@
+{
+  "model_type": "XGBoostRegressor",
+  "task": "percentage_deviation_association",
+  "asset_type": "solar",
+  "version": "1.0.0",
+  "trained_at": "2026-09-15T13:28:59.961113+00:00",
+  "features": [
+    "cloud_cover",
+    "temperature_2m",
+    "relative_humidity_2m",
+    "hour_of_day",
+    "day_of_week",
+    "season",
+    "lag_1",
+    "roll_mean_4",
+    "anomaly",
+    "solar_elevation_deg",
+    "cos_solar_zenith",
+    "diagnostic_category_normal_production"
+  ],
+  "target": "percentage_deviation",
+  "n_train_rows": 48,
+  "n_val_rows": 12,
+  "train_period": {
+    "start": "2026-01-01 00:00:00+00:00",
+    "end": "2026-01-01 11:45:00+00:00"
+  },
+  "val_period": {
+    "start": "2026-01-01 12:00:00+00:00",
+    "end": "2026-01-01 14:45:00+00:00"
+  },
+  "validation_metrics": {
+    "mae_percentage_points": 0.0,
+    "rmse_percentage_points": 0.0
+  },
+  "notes": "SHAP identifies associations in deviation predictions; it does not establish physical causation."
+}

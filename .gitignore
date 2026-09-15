@@ -110,3 +110,13 @@ GridPilot_U2_8Hour_Execution_Plan.md
 .terraform/
 *.tfstate
 *.tfstate.backup
+
+# Local renewable datasets and generated training artifacts
+ml/datasets/kaggle_power_system/
+ml/datasets/liander2024/
+ml/models/renewable/artifacts/
+
+# Documentation and the small deployment model intentionally kept in Git
+!docs/data/
+!docs/data/**
+!ml/models/renewable/wind_lgbm_wind_park_synth_01.pkl

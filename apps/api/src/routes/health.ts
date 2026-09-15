@@ -18,7 +18,8 @@ export async function handleHealth(
       version: "0.1.0",
       services: {
         apiGateway: "healthy",
-        watsonxConfigured: Boolean(config.watsonx.apiKey),
+        llmProvider: config.llm.provider,
+        llmModel: config.llm.ollamaModel,
       },
     },
   };

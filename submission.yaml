@@ -14,36 +14,45 @@ team:
 
 submission:
   title: "Grid Load Optimisation & Renewable Energy Performance Advisor"
-  
+
   problem_statement: >
     Power grid operators struggle with high-frequency renewable volatility, sudden demand spikes,
     and inefficient asset curtailment. Existing monitoring systems lack unified predictive diagnostics
     and constraint-aware mathematical optimization, leading to costly grid stress and clean energy waste.
-  
+
   solution_summary: >
     GridPilot AI combines LightGBM demand/renewable forecasting, XGBoost spike detection,
     and Isolation Forest anomaly tracking with Google OR-Tools MILP optimization. It synthesizes actionable
-    15-minute operator briefs and natural language actions via IBM watsonx.ai and IBM Bob MCP tools
+    15-minute operator briefs and natural language actions via local Qwen 2.5 LLM and IBM Bob MCP tools
     to minimize curtailment and ensure grid stability.
-  
+
   key_features:
     - "15/30/60-minute electricity demand and solar/wind generation forecasting using LightGBM"
     - "Multi-class demand spike detection with XGBoost and Isolation Forest anomaly tracking"
     - "SHAP explainability for renewable asset underperformance and root-cause analysis"
     - "Constraint-aware battery dispatch and flexible load shifting using Google OR-Tools MILP"
-    - "Automated 8-part operator briefs and interactive command copilot via IBM Bob and watsonx.ai"
-  
+    - "Automated 8-part operator briefs and interactive command copilot via IBM Bob and local Qwen 2.5 LLM"
+
   tech_stack:
     languages: ["Python", "TypeScript", "JavaScript"]
     frameworks: ["FastAPI", "React", "Express"]
-    ibm_technologies: ["watsonx.ai", "IBM Bob", "Granite 3.0"]
+    ibm_technologies: ["IBM Bob", "Model Context Protocol"]
     databases: ["PostgreSQL"]
-    other: ["Google OR-Tools", "LightGBM", "XGBoost", "SHAP", "Docker"]
+    other:
+      [
+        "Qwen 2.5",
+        "Ollama",
+        "Google OR-Tools",
+        "LightGBM",
+        "XGBoost",
+        "SHAP",
+        "Docker",
+      ]
 
   what_we_are_most_proud_of: >
     The deterministic coupling of mathematical optimization (OR-Tools) with AI forecasting and IBM Bob MCP
     tooling—ensuring the LLM explains mathematically verified dispatch decisions rather than hallucinating physical actions.
-  
+
   known_limitations: >
     Currently optimized for 15-minute time intervals up to 60-minute horizons based on OpenSTEF Liander grid topology.
     Day-ahead 24-hour dispatch and multi-regional interconnects are planned for future iterations.

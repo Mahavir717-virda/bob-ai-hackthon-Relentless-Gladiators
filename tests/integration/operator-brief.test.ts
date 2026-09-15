@@ -8,7 +8,17 @@ import { validateOperatorBrief } from "../../shared/contracts/OperatorBrief.ts";
 import { createApiServer } from "../../apps/api/src/server.ts";
 import { loadConfig } from "../../apps/api/src/config.ts";
 
+import { resetLLMProvider, getLLMProvider, MockLLMProvider } from "../../agent/provider/index.ts";
+
 test("Operator Brief Generator Suite", async (t) => {
+  t.beforeEach(() => {
+    getLLMProvider(new MockLLMProvider());
+  });
+
+  t.afterEach(() => {
+    resetLLMProvider();
+  });
+
   const generator = new OperatorBriefGenerator();
 
   const fullInput: OperatorBriefInput = {

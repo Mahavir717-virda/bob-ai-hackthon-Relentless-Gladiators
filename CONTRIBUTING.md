@@ -31,7 +31,7 @@ To prevent merge collisions and preserve engineering boundaries, each team membe
 2. **Rule B — The Optimizer is responsible for DECISIONS:**
    - Google OR-Tools / MILP engine calculates battery dispatch, flexible load shifting, curtailment minimisation, and verifies feasibility.
    - The LLM must **never** invent dispatch numbers or bypass the optimizer.
-3. **Rule C — LLM (watsonx.ai / Bob) is responsible for COMMUNICATION:**
+3. **Rule C — LLM (Qwen / Bob) is responsible for COMMUNICATION:**
    - Interprets structured outputs, generates operator briefs, answers operator questions, and calls tools.
    - Preserves mathematical ground truth: never hallucinations, never claims correlation is causation.
 4. **Rule D — Frontend contains PRESENTATION logic only:**
