@@ -1,7 +1,7 @@
 {
   "model_version": "demand-spike-xgb-v1",
   "feature_version": "1.0.0",
-  "evaluated_at": "2026-09-15T13:04:49.916083+00:00",
+  "evaluated_at": "2026-09-15T14:41:24.490336+00:00",
   "test_sample_size": 5270,
   "macro_metrics": {
     "precision": 0.4875,

@@ -1,0 +1,165 @@
+{
+  "model_name": "GridPilot Demand LightGBM Forecaster",
+  "algorithm": "LightGBM Regressor (Multi-Horizon Boosters)",
+  "version": "demand-lgbm-v1",
+  "training_timestamp": "2026-09-15T14:41:21.544395+00:00",
+  "target": "demandMw",
+  "horizons": [
+    15,
+    30,
+    60
+  ],
+  "feature_names": [
+    "temperature_2m",
+    "relative_humidity_2m",
+    "surface_pressure",
+    "cloud_cover",
+    "wind_speed_10m",
+    "wind_direction_10m",
+    "shortwave_radiation",
+    "direct_radiation",
+    "diffuse_radiation",
+    "direct_normal_irradiance",
+    "demand_mw_lag_15m",
+    "demand_mw_lag_30m",
+    "demand_mw_lag_60m",
+    "demand_mw_lag_1440m",
+    "demand_mw_roll_mean_4",
+    "demand_mw_roll_std_4",
+    "demand_mw_roll_min_4",
+    "demand_mw_roll_max_4",
+    "demand_mw_roll_mean_16",
+    "demand_mw_roll_std_16",
+    "demand_mw_roll_min_16",
+    "demand_mw_roll_max_16",
+    "demand_mw_roll_mean_96",
+    "demand_mw_roll_std_96",
+    "demand_mw_roll_min_96",
+    "demand_mw_roll_max_96",
+    "demand_mw_diff_15m",
+    "demand_mw_diff_1h",
+    "hour",
+    "day_of_week",
+    "is_weekend",
+    "is_holiday",
+    "season",
+    "sin_hour",
+    "cos_hour",
+    "sin_dow",
+    "cos_dow"
+  ],
+  "training_row_count": 24595,
+  "validation_row_count": 5270,
+  "test_row_count": 5271,
+  "metrics_per_horizon": {
+    "15m": {
+      "mae": 0.0497,
+      "rmse": 0.0829,
+      "mape": 14.2689
+    },
+    "30m": {
+      "mae": 0.0617,
+      "rmse": 0.0972,
+      "mape": 17.7947
+    },
+    "60m": {
+      "mae": 0.0846,
+      "rmse": 0.1257,
+      "mape": 21.8114
+    }
+  },
+  "overall_test_metrics": {
+    "mae": 0.0653,
+    "rmse": 0.1019,
+    "mape": 17.9583
+  },
+  "baseline_comparison": [
+    {
+      "model": "persistence",
+      "horizon_minutes": 15,
+      "mae": 0.0382,
+      "rmse": 0.0673,
+      "mape": 12.2493,
+      "n": 5271
+    },
+    {
+      "model": "lightgbm",
+      "horizon_minutes": 15,
+      "mae": 0.0497,
+      "rmse": 0.0829,
+      "mape": 14.2689,
+      "n": 5270
+    },
+    {
+      "model": "seasonal_naive",
+      "horizon_minutes": 15,
+      "mae": 0.1266,
+      "rmse": 0.1976,
+      "mape": 37.6271,
+      "n": 5271
+    },
+    {
+      "model": "lightgbm",
+      "horizon_minutes": 30,
+      "mae": 0.0617,
+      "rmse": 0.0972,
+      "mape": 17.7947,
+      "n": 5269
+    },
+    {
+      "model": "persistence",
+      "horizon_minutes": 30,
+      "mae": 0.0631,
+      "rmse": 0.0996,
+      "mape": 19.0889,
+      "n": 5271
+    },
+    {
+      "model": "seasonal_naive",
+      "horizon_minutes": 30,
+      "mae": 0.1266,
+      "rmse": 0.1976,
+      "mape": 37.6271,
+      "n": 5271
+    },
+    {
+      "model": "lightgbm",
+      "horizon_minutes": 60,
+      "mae": 0.0846,
+      "rmse": 0.1257,
+      "mape": 21.8114,
+      "n": 5267
+    },
+    {
+      "model": "persistence",
+      "horizon_minutes": 60,
+      "mae": 0.1056,
+      "rmse": 0.1492,
+      "mape": 29.9858,
+      "n": 5271
+    },
+    {
+      "model": "seasonal_naive",
+      "horizon_minutes": 60,
+      "mae": 0.1266,
+      "rmse": 0.1976,
+      "mape": 37.6271,
+      "n": 5271
+    }
+  ],
+  "random_seed": 42,
+  "model_hyperparameters": {
+    "objective": "regression",
+    "metric": "mae",
+    "learning_rate": 0.05,
+    "num_leaves": 31,
+    "min_data_in_leaf": 20,
+    "feature_fraction": 0.9,
+    "bagging_fraction": 0.9,
+    "bagging_freq": 5,
+    "seed": 42,
+    "verbose": -1
+  },
+  "artifact_path": "ml/models/demand/demand_lgbm.pkl",
+  "serialization_format": "joblib"
+}

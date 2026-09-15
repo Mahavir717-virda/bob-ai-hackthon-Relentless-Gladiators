@@ -1,0 +1,141 @@
+{
+  "model_name": "GridPilot Demand Spike XGBoost Classifier",
+  "algorithm": "XGBoost Classifier (multi:softprob)",
+  "version": "demand-spike-xgb-v1",
+  "training_timestamp": "2026-09-15T14:41:24.574845+00:00",
+  "target": "spike_class",
+  "classes": [
+    "normal",
+    "moderate",
+    "severe"
+  ],
+  "class_mapping": {
+    "0": "normal",
+    "1": "moderate",
+    "2": "severe"
+  },
+  "feature_names": [
+    "current_load",
+    "forecast_load",
+    "load_growth_pct",
+    "historical_peak_24h",
+    "temp_c",
+    "humidity",
+    "cloud_cover",
+    "wind_speed",
+    "solar_radiation",
+    "hour",
+    "hour_sin",
+    "hour_cos",
+    "day_of_week",
+    "is_weekend"
+  ],
+  "sample_size": 5270,
+  "labeling_rule": {
+    "rule_version": "spike-rule-v1",
+    "created_at": "2026-09-15T14:41:21.661472+00:00",
+    "model_version": "demand-spike-xgb-v1",
+    "derivation_split": "chronological_train_split_70pct",
+    "sample_size": 24594,
+    "lead_minutes": 15,
+    "denominator_stabilizer_mw": 0.1,
+    "growth_metric_formula": "((demand_{t+15m} - demand_t) / max(demand_t, 0.10 MW)) * 100",
+    "percentile_cutpoints": {
+      "moderate_percentile": 0.95,
+      "severe_percentile": 0.99
+    },
+    "thresholds": {
+      "moderate_spike_growth_pct_min": 133.6667,
+      "severe_spike_growth_pct_min": 366.6667,
+      "moderate_spike_mw_delta_min": 0.1667,
+      "severe_spike_mw_delta_min": 0.3733
+    },
+    "class_definitions": {
+      "0": {
+        "name": "normal",
+        "condition": "growth_pct < 133.67%",
+        "train_samples": 23364,
+        "train_prevalence_pct": 95.0
+      },
+      "1": {
+        "name": "moderate",
+        "condition": "133.67% <= growth_pct < 366.67%",
+        "train_samples": 983,
+        "train_prevalence_pct": 4.0
+      },
+      "2": {
+        "name": "severe",
+        "condition": "growth_pct >= 366.67%",
+        "train_samples": 247,
+        "train_prevalence_pct": 1.0
+      }
+    }
+  },
+  "evaluation_metrics": {
+    "accuracy": 0.9901,
+    "macro_precision": 0.4875,
+    "macro_recall": 0.6734,
+    "macro_f1": 0.5362,
+    "weighted_precision": 0.9935,
+    "weighted_recall": 0.9901,
+    "weighted_f1": 0.9916,
+    "per_class": {
+      "normal": {
+        "precision": 0.9979,
+        "recall": 0.9935,
+        "f1": 0.9957,
+        "support": 5239
+      },
+      "moderate": {
+        "precision": 0.2647,
+        "recall": 0.36,
+        "f1": 0.3051,
+        "support": 25
+      },
+      "severe": {
+        "precision": 0.2,
+        "recall": 0.6667,
+        "f1": 0.3077,
+        "support": 6
+      }
+    },
+    "confusion_matrix": {
+      "classes": [
+        "normal",
+        "moderate",
+        "severe"
+      ],
+      "matrix": [
+        [
+          5205,
+          24,
+          10
+        ],
+        [
+          10,
+          9,
+          6
+        ],
+        [
+          1,
+          1,
+          4
+        ]
+      ],
+      "notes": "Rows = True Class, Columns = Predicted Class"
+    }
+  },
+  "model_hyperparameters": {
+    "n_estimators": 300,
+    "max_depth": 5,
+    "learning_rate": 0.05,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "min_child_weight": 3.0,
+    "objective": "multi:softprob",
+    "num_class": 3,
+    "random_seed": 42
+  },
+  "artifact_path": "ml/models/demand/spike_xgb.pkl",
+  "serialization_format": "joblib"
+}

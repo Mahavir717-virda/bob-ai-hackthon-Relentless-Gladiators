@@ -83,7 +83,15 @@ class DemandForecastService:
 
         # 5. Initialize spike classifier (XGBoost)
         self.spike_classifier = None
-        if DemandSpikeClassifier is not None:
+        spike_pkl = self.models_dir / "spike_xgb.pkl"
+        if spike_pkl.exists() and DemandSpikeClassifier is not None:
+            try:
+                clf = DemandSpikeClassifier(models_dir=self.models_dir)
+                clf.model = joblib.load(spike_pkl)
+                self.spike_classifier = clf
+            except Exception:
+                pass
+        elif DemandSpikeClassifier is not None:
             try:
                 clf = DemandSpikeClassifier(models_dir=self.models_dir)
                 clf.load_model()
@@ -143,8 +151,23 @@ class DemandForecastService:
                 if h_min and rmse:
                     self.horizon_rmse[h_min] = float(rmse)
 
-        # Load each horizon model booster
+        # Load from unified demand_lgbm.pkl if available
+        lgbm_pkl = self.models_dir / "demand_lgbm.pkl"
+        if lgbm_pkl.exists():
+            try:
+                container = joblib.load(lgbm_pkl)
+                if hasattr(container, "models"):
+                    for h, b in container.models.items():
+                        self.models[h] = b
+                if hasattr(container, "horizon_rmse"):
+                    self.horizon_rmse.update(container.horizon_rmse)
+            except Exception:
+                pass
+
+        # Load each horizon model booster if not already loaded
         for h in self.SUPPORTED_HORIZONS:
+            if h in self.models:
+                continue
             txt_p = self.models_dir / f"{self.model_version}_h{h}min.txt"
             joblib_p = self.models_dir / f"{self.model_version}_h{h}min.joblib"
 
@@ -308,61 +331,47 @@ class DemandForecastService:
         spike_level = "normal"
         spike_prob = 0.05
 
-        if self.spike_classifier is not None and len(points) > 0:
-            try:
-                # Construct feature vector for classifier
-                curr_mw = float(prior_history["demand_mw"].iloc[-1])
-                fcst_mw = float(points[0].demandMw)
-                eps = 0.10
-                growth_pct = ((fcst_mw - curr_mw) / max(curr_mw, eps)) * 100.0
-                peak_24h = float(prior_history["demand_mw"].tail(96).max())
+        if self.spike_classifier is None:
+            raise ForecastServiceError(
+                message="Demand spike classifier model is unavailable",
+                error_code="MODEL_UNAVAILABLE",
+            )
 
-                row_feat = {
-                    "current_load": curr_mw,
-                    "forecast_load": fcst_mw,
-                    "load_growth_pct": growth_pct,
-                    "historical_peak_24h": peak_24h,
-                    "temp_c": float(latest_feature_row["temp_c"].iloc[0]) if "temp_c" in latest_feature_row.columns else 15.0,
-                    "humidity": float(latest_feature_row["humidity"].iloc[0]) if "humidity" in latest_feature_row.columns else 70.0,
-                    "cloud_cover": float(latest_feature_row["cloud_cover"].iloc[0]) if "cloud_cover" in latest_feature_row.columns else 50.0,
-                    "wind_speed": float(latest_feature_row["wind_speed"].iloc[0]) if "wind_speed" in latest_feature_row.columns else 10.0,
-                    "solar_radiation": float(latest_feature_row["solar_radiation"].iloc[0]) if "solar_radiation" in latest_feature_row.columns else 0.0,
-                    "hour": int(start_dt.hour),
-                    "hour_sin": float(np.sin(2 * np.pi * start_dt.hour / 24.0)),
-                    "hour_cos": float(np.cos(2 * np.pi * start_dt.hour / 24.0)),
-                    "day_of_week": int(start_dt.weekday()),
-                    "is_weekend": int(start_dt.weekday() >= 5),
-                }
-                spike_input_df = pd.DataFrame([row_feat])
-                preds, probas = self.spike_classifier.predict(spike_input_df)
-                c_idx = int(preds[0])
-                c_names = ["normal", "moderate", "severe"]
-                spike_level = c_names[c_idx]
-                spike_prob = float(probas[0][c_idx])
-            except Exception:
-                # Documented fallback if dynamic feature calculation encounters an edge condition
-                upper_threshold = 1.40
-                if peak_pred > upper_threshold * 1.2:
-                    spike_level = "severe"
-                    spike_prob = 0.85
-                elif peak_pred > upper_threshold:
-                    spike_level = "moderate"
-                    spike_prob = 0.45
-                else:
-                    spike_level = "normal"
-                    spike_prob = 0.05
-        else:
-            # Fallback based on historical quantile threshold
-            upper_threshold = 1.40
-            if peak_pred > upper_threshold * 1.2:
-                spike_level = "severe"
-                spike_prob = 0.85
-            elif peak_pred > upper_threshold:
-                spike_level = "moderate"
-                spike_prob = 0.45
-            else:
-                spike_level = "normal"
-                spike_prob = 0.05
+        try:
+            # Construct feature vector for classifier
+            curr_mw = float(prior_history["demand_mw"].iloc[-1])
+            fcst_mw = float(points[0].demandMw)
+            eps = 0.10
+            growth_pct = ((fcst_mw - curr_mw) / max(curr_mw, eps)) * 100.0
+            peak_24h = float(prior_history["demand_mw"].tail(96).max())
+
+            row_feat = {
+                "current_load": curr_mw,
+                "forecast_load": fcst_mw,
+                "load_growth_pct": growth_pct,
+                "historical_peak_24h": peak_24h,
+                "temp_c": float(latest_feature_row["temperature_2m"].iloc[0]) if "temperature_2m" in latest_feature_row.columns else (float(latest_feature_row["temp_c"].iloc[0]) if "temp_c" in latest_feature_row.columns else 15.0),
+                "humidity": float(latest_feature_row["relative_humidity_2m"].iloc[0]) if "relative_humidity_2m" in latest_feature_row.columns else (float(latest_feature_row["humidity"].iloc[0]) if "humidity" in latest_feature_row.columns else 70.0),
+                "cloud_cover": float(latest_feature_row["cloud_cover"].iloc[0]) if "cloud_cover" in latest_feature_row.columns else 50.0,
+                "wind_speed": float(latest_feature_row["wind_speed_10m"].iloc[0]) if "wind_speed_10m" in latest_feature_row.columns else (float(latest_feature_row["wind_speed"].iloc[0]) if "wind_speed" in latest_feature_row.columns else 10.0),
+                "solar_radiation": float(latest_feature_row["shortwave_radiation"].iloc[0]) if "shortwave_radiation" in latest_feature_row.columns else (float(latest_feature_row["solar_radiation"].iloc[0]) if "solar_radiation" in latest_feature_row.columns else 0.0),
+                "hour": int(start_dt.hour),
+                "hour_sin": float(np.sin(2 * np.pi * start_dt.hour / 24.0)),
+                "hour_cos": float(np.cos(2 * np.pi * start_dt.hour / 24.0)),
+                "day_of_week": int(start_dt.weekday()),
+                "is_weekend": int(start_dt.weekday() >= 5),
+            }
+            spike_input_df = pd.DataFrame([row_feat])
+            preds, probas = self.spike_classifier.predict(spike_input_df)
+            c_idx = int(preds[0])
+            c_names = ["normal", "moderate", "severe"]
+            spike_level = c_names[c_idx]
+            spike_prob = float(probas[0][c_idx])
+        except Exception as e:
+            raise ForecastServiceError(
+                message=f"Spike classification failed during inference: {e}",
+                error_code="SPIKE_INFERENCE_ERROR",
+            ) from e
 
         spike_risk = SpikeRisk(
             level=spike_level,
