@@ -2,7 +2,7 @@
   "model_name": "GridPilot Demand Spike XGBoost Classifier",
   "algorithm": "XGBoost Classifier (multi:softprob)",
   "version": "demand-spike-xgb-v1",
-  "training_timestamp": "2026-09-15T14:41:24.574845+00:00",
+  "training_timestamp": "2026-09-15T15:32:45.421488+00:00",
   "target": "spike_class",
   "classes": [
     "normal",
@@ -33,7 +33,7 @@
   "sample_size": 5270,
   "labeling_rule": {
     "rule_version": "spike-rule-v1",
-    "created_at": "2026-09-15T14:41:21.661472+00:00",
+    "created_at": "2026-09-15T15:32:43.213695+00:00",
     "model_version": "demand-spike-xgb-v1",
     "derivation_split": "chronological_train_split_70pct",
     "sample_size": 24594,
@@ -72,30 +72,30 @@
     }
   },
   "evaluation_metrics": {
-    "accuracy": 0.9901,
-    "macro_precision": 0.4875,
-    "macro_recall": 0.6734,
-    "macro_f1": 0.5362,
-    "weighted_precision": 0.9935,
-    "weighted_recall": 0.9901,
-    "weighted_f1": 0.9916,
+    "accuracy": 0.9909,
+    "macro_precision": 0.4962,
+    "macro_recall": 0.6736,
+    "macro_f1": 0.5399,
+    "weighted_precision": 0.9939,
+    "weighted_recall": 0.9909,
+    "weighted_f1": 0.9922,
     "per_class": {
       "normal": {
-        "precision": 0.9979,
-        "recall": 0.9935,
-        "f1": 0.9957,
+        "precision": 0.9981,
+        "recall": 0.9943,
+        "f1": 0.9962,
         "support": 5239
       },
       "moderate": {
-        "precision": 0.2647,
+        "precision": 0.3,
         "recall": 0.36,
-        "f1": 0.3051,
+        "f1": 0.3273,
         "support": 25
       },
       "severe": {
-        "precision": 0.2,
+        "precision": 0.1905,
         "recall": 0.6667,
-        "f1": 0.3077,
+        "f1": 0.2963,
         "support": 6
       }
     },
@@ -107,14 +107,14 @@
       ],
       "matrix": [
         [
-          5205,
-          24,
+          5209,
+          20,
           10
         ],
         [
-          10,
           9,
-          6
+          9,
+          7
         ],
         [
           1,

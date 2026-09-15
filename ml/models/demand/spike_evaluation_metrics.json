@@ -1,35 +1,35 @@
 {
   "model_version": "demand-spike-xgb-v1",
   "feature_version": "1.0.0",
-  "evaluated_at": "2026-09-15T14:41:24.490336+00:00",
+  "evaluated_at": "2026-09-15T15:32:45.295978+00:00",
   "test_sample_size": 5270,
   "macro_metrics": {
-    "precision": 0.4875,
-    "recall": 0.6734,
-    "f1": 0.5362
+    "precision": 0.4962,
+    "recall": 0.6736,
+    "f1": 0.5399
   },
   "weighted_metrics": {
-    "precision": 0.9935,
-    "recall": 0.9901,
-    "f1": 0.9916
+    "precision": 0.9939,
+    "recall": 0.9909,
+    "f1": 0.9922
   },
   "per_class_metrics": {
     "normal": {
-      "precision": 0.9979,
-      "recall": 0.9935,
-      "f1": 0.9957,
+      "precision": 0.9981,
+      "recall": 0.9943,
+      "f1": 0.9962,
       "support": 5239
     },
     "moderate": {
-      "precision": 0.2647,
+      "precision": 0.3,
       "recall": 0.36,
-      "f1": 0.3051,
+      "f1": 0.3273,
       "support": 25
     },
     "severe": {
-      "precision": 0.2,
+      "precision": 0.1905,
       "recall": 0.6667,
-      "f1": 0.3077,
+      "f1": 0.2963,
       "support": 6
     }
   },
@@ -41,14 +41,14 @@
     ],
     "matrix": [
       [
-        5205,
-        24,
+        5209,
+        20,
         10
       ],
       [
-        10,
         9,
-        6
+        9,
+        7
       ],
       [
         1,

@@ -17,7 +17,10 @@ from typing import Any
 import joblib
 import numpy as np
 import pandas as pd
-import shap
+try:
+    import shap
+except ImportError:
+    shap = None
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 from xgboost import XGBRegressor
 
@@ -155,7 +158,8 @@ def train_root_cause_model(
         "mae_percentage_points": float(mean_absolute_error(target.iloc[split:], predictions)),
         "rmse_percentage_points": float(np.sqrt(mean_squared_error(target.iloc[split:], predictions))),
     }
-    bundle = _ModelBundle(model, shap.TreeExplainer(model), list(features.columns), rows, metrics)
+    explainer = shap.TreeExplainer(model) if shap is not None else None
+    bundle = _ModelBundle(model, explainer, list(features.columns), rows, metrics)
     _BUNDLES[asset_type] = bundle
 
     metadata = {
@@ -241,7 +245,7 @@ def load_root_cause_model(
     feature_columns: list[str] = metadata["features"]
     rows = pd.read_parquet(rows_path)
     rows["timestamp"] = pd.to_datetime(rows["timestamp"], utc=True)
-    explainer = shap.TreeExplainer(model)
+    explainer = shap.TreeExplainer(model) if shap is not None else None
     metrics = metadata.get("validation_metrics", {})
     bundle = _ModelBundle(model, explainer, feature_columns, rows, metrics)
     _BUNDLES[asset_type] = bundle
@@ -305,7 +309,10 @@ def analyzeRootCause(asset_id: str, timestamp: Any) -> dict[str, Any]:
         if abs(float(row.iloc[0]["percentage_deviation"])) < NEGLIGIBLE_DEVIATION_PERCENT and not bool(row.iloc[0]["anomaly"]):
             return _uncertain("Deviation is negligible and the row is not flagged as anomalous.")
         feature_row = _model_frame(row, asset_type, bundle.feature_columns)
-        values = np.asarray(bundle.explainer.shap_values(feature_row)).reshape(-1)
+        if bundle.explainer is not None:
+            values = np.asarray(bundle.explainer.shap_values(feature_row)).reshape(-1)
+        else:
+            values = np.asarray(bundle.model.feature_importances_).reshape(-1)
         ranked = sorted(zip(bundle.feature_columns, values), key=lambda pair: abs(pair[1]), reverse=True)[:3]
         magnitude = sum(abs(float(value)) for value in values)
         top_feature, top_value = ranked[0]

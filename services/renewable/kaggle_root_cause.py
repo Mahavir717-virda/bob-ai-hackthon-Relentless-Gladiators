@@ -17,7 +17,10 @@ from typing import Any
 import joblib
 import numpy as np
 import pandas as pd
-import shap
+try:
+    import shap
+except ImportError:
+    shap = None
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 from xgboost import XGBRegressor
 
@@ -240,7 +243,10 @@ def explain_kaggle_row(
         return _insufficient(asset_id, timestamp, energy_type, "row is not an explicitly evaluated anomaly")
     values = _root_frame(pd.DataFrame([row])).fillna(model_bundle["medians"]).fillna(0.0)
     values = values[model_bundle["feature_columns"]]
-    shap_values = np.asarray(shap.TreeExplainer(model_bundle["model"])(values).values).reshape(-1)
+    if shap is not None:
+        shap_values = np.asarray(shap.TreeExplainer(model_bundle["model"])(values).values).reshape(-1)
+    else:
+        shap_values = np.asarray(model_bundle["model"].feature_importances_).reshape(-1)
     evidence = [
         {"feature": name, "value": float(values.iloc[0][name]), "shap_contribution": float(value)}
         for name, value in sorted(zip(model_bundle["feature_columns"], shap_values), key=lambda item: abs(item[1]), reverse=True)[:5]

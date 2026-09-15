@@ -11,10 +11,14 @@ import { ApiClient } from "./services/api-client.ts";
 
 export function App() {
   const [activePage, setActivePage] = useState<NavPageId>("command_center");
-  const [lastUpdated, setLastUpdated] = useState<string>(new Date().toISOString());
+  const [lastUpdated, setLastUpdated] = useState<string>(
+    new Date().toISOString(),
+  );
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [anomaliesCount, setAnomaliesCount] = useState(0);
-  const [systemHealth, setSystemHealth] = useState<"healthy" | "degraded" | "offline">("healthy");
+  const [systemHealth, setSystemHealth] = useState<
+    "healthy" | "degraded" | "offline"
+  >("healthy");
 
   const syncSystem = async () => {
     try {
@@ -25,7 +29,9 @@ export function App() {
       ]);
 
       if (health.status === "fulfilled") {
-        setSystemHealth(health.value.status === "healthy" ? "healthy" : "degraded");
+        setSystemHealth(
+          health.value.status === "healthy" ? "healthy" : "degraded",
+        );
       } else {
         setSystemHealth("offline");
       }
@@ -49,7 +55,7 @@ export function App() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#090d16] text-slate-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-canvas text-primary flex flex-col font-sans transition-colors duration-200">
       {/* Shell Header */}
       <Header
         lastUpdated={lastUpdated}
@@ -72,7 +78,9 @@ export function App() {
         )}
         {activePage === "demand_forecast" && <DemandForecastPage />}
         {activePage === "renewable_assets" && (
-          <RenewableAssetsPage onNavigateCopilot={() => setActivePage("ai_copilot")} />
+          <RenewableAssetsPage
+            onNavigateCopilot={() => setActivePage("ai_copilot")}
+          />
         )}
         {activePage === "optimization_center" && <OptimizationCenterPage />}
         {activePage === "ai_copilot" && <AICopilotPage />}
@@ -80,11 +88,12 @@ export function App() {
       </main>
 
       {/* Minimal Footer with Invariant Rules reminder */}
-      <footer className="border-t border-slate-800/80 bg-slate-950/80 px-6 py-3 text-[11px] text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-2">
+      <footer className="border-t border-border bg-surface-muted/80 px-6 py-3 text-[11px] text-secondary flex flex-col sm:flex-row items-center justify-between gap-2 transition-colors duration-200">
         <div>
-          GridPilot AI &bull; Relentless Gladiators &bull; IBM Bob AI Hackathon 2026
+          GridPilot AI &bull; Relentless Gladiators &bull; IBM Bob AI Hackathon
+          2026
         </div>
-        <div className="flex items-center gap-3 font-mono text-[10px] text-slate-400">
+        <div className="flex items-center gap-3 font-metric text-[10px] text-secondary">
           <span>RULE A: ML PREDICTS</span>
           <span>&bull;</span>
           <span>RULE B: OPTIMIZER DECIDES</span>

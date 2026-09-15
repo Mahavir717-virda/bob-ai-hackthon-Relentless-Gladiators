@@ -127,16 +127,18 @@ export function createApiServer(options: CreateServerOptions = {}): Server {
       });
 
       if (!res.headersSent) {
-        res.writeHead(500, { "Content-Type": "application/json" });
+        const statusCode = typeof err?.statusCode === "number" ? err.statusCode : 500;
+        const errorCode = err?.code || "INTERNAL_SERVER_ERROR";
+        res.writeHead(statusCode, { "Content-Type": "application/json" });
         res.end(
           JSON.stringify({
             success: false,
             requestId,
             timestamp: new Date().toISOString(),
             error: {
-              code: "INTERNAL_SERVER_ERROR",
-              message: "An unexpected internal server error occurred",
-              details: config.nodeEnv === "development" ? err?.message : undefined,
+              code: errorCode,
+              message: err?.message || "An unexpected internal server error occurred",
+              details: err?.details || (config.nodeEnv === "development" ? err?.stack : undefined),
             },
           })
         );
