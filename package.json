@@ -1,0 +1,19 @@
+{
+  "name": "gridpilot-ai",
+  "version": "0.1.0",
+  "description": "GridPilot AI — Grid Load Optimisation & Renewable Energy Performance Advisor",
+  "type": "module",
+  "scripts": {
+    "test": "node --test --experimental-strip-types tests/integration/**/*.test.ts",
+    "test:contracts": "node --test --experimental-strip-types tests/integration/contracts.test.ts"
+  },
+  "keywords": [
+    "grid-optimization",
+    "renewable-energy",
+    "load-forecasting",
+    "ibm-bob",
+    "watsonx"
+  ],
+  "author": "Relentless Gladiators",
+  "license": "Apache-2.0"
+}
