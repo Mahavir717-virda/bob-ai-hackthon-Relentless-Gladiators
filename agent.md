@@ -1,129 +1,193 @@
-# Agent Playbook: IBM Bob & Relentless Gladiators
-# Bob AI Hackathon Submission Guidelines & Operational Instructions
+# Agent Playbook: GridPilot AI (U2) & IBM Bob
+# Team: Relentless Gladiators | Hackathon: Bob AI Hackathon
 
-> **File:** `agent.md`  
-> **Team Name:** Relentless Gladiators  
-> **Target:** Bob AI Hackathon  
-> **Role:** Operational context, engineering standards, and automation guidelines for IBM Bob (BobShell) and agentic workflows.
-
----
-
-## 1. Project & Mission Overview
-
-You are working within the repository for **Team Relentless Gladiators** in the **Bob AI Hackathon**.
-Your objective is to design, develop, document, and test an enterprise-grade AI solution that scores maximum points on the hackathon evaluation rubric.
-
-### 🏆 Hackathon Evaluation Rubric (100 Points Total)
-1. **Technical Implementation Quality (25 pts):**
-   - Evaluators inspect actual source code in `src/`, not just documentation.
-   - Code must be clean, modular, properly typed, error-handled, and tested.
-2. **Innovation & Differentiation (25 pts):**
-   - Solves a non-trivial problem with a differentiated approach.
-   - Grounded in functional code rather than theoretical concepts.
-3. **Problem Depth & Vision (15 pts):**
-   - Deep understanding of the problem domain, quantifiable impact, and target persona.
-   - Articulated in `docs/problem-statement.md` and `docs/solution-overview.md`.
-4. **Working Demo & Functionality (15 pts):**
-   - Must run reproducibly following `docs/setup-guide.md`.
-   - Backed by demo artifacts (`demo/screenshots/` and `demo/demo-video-link.txt`).
-5. **IBM Bob Integration (10 pts - CRITICAL):**
-   - **IBM Bob must be load-bearing**, not just cosmetic or name-dropped.
-   - Bob should actively execute workflows, interface via MCP servers, orchestrate tasks, or serve as the conversational command interface for the system.
-6. **Documentation & Reproducibility (10 pts):**
-   - Complete, clear setup instructions, architecture diagrams (Mermaid), and verified clean installs.
+> **File:** `agent.md` (referenced by `AGENTS.md`)  
+> **System:** GridPilot AI — Grid Load Optimisation & Renewable Energy Performance Advisor (Problem U2)  
+> **Team Name:** Relentless Gladiators (Track: AI / Sustainability)  
+> **Role:** Master operational context, architectural guardrails, contract specifications, and automation instructions for IBM Bob (BobShell) and agentic workers.
 
 ---
 
-## 2. Repository Structure & Artifact Invariants
+## 1. Project & Architectural Mission
 
-The repository structure is strictly monitored by automated GitHub Actions (`.github/workflows/validate.yml`).
+**GridPilot AI** is a real-time **decision-support system** for power grid operators managing high-penetration renewable grids (solar, wind, battery, flexible industrial/EV loads).
 
-```
-bob-ai-hackathon-[team-name]/
-├── submission.yaml          # Evaluator metadata (MUST be 100% valid YAML, no empty required fields)
-├── README.md                # Human-readable front page (ZERO [placeholder] brackets allowed)
-├── agent.md                 # Agent instructions & context (this file)
-├── src/                     # All application source code
-│   ├── .env.example         # Complete template of all required environment variables
-│   └── README.md            # Explanation of src/ architecture & modules
-├── docs/
-│   ├── problem-statement.md # Deep-dive into problem, pain points, audience, & metrics
-│   ├── solution-overview.md # Conceptual architecture, tradeoffs, and differentiation
-│   ├── architecture.md      # Mermaid diagrams, component table, security & data flow
-│   └── setup-guide.md       # Exact step-by-step reproduction instructions
-├── demo/
-│   ├── demo-video-link.txt  # Public video URL (Loom, YouTube, Box)
-│   ├── live-demo-url.txt    # Deployed URL or "NOT DEPLOYED"
-│   └── screenshots/         # Min 3 sequential screenshots (01-..., 02-..., 03-...)
-├── presentation/
-│   └── slides.pdf           # Pitch deck (Problem, Solution, Tech/Bob, Architecture, Impact)
-└── .github/workflows/
-    └── validate.yml         # DO NOT MODIFY: Submission validator
+### Core Pipeline Flow
+```text
+CURRENT GRID STATE (15-min)
+       ↓
+DEMAND FORECAST (LightGBM) → SPIKE DETECTION (XGBoost Classifier)
+       ↓
+RENEWABLE FORECAST (LightGBM Solar/Wind)
+       ↓
+ANOMALY DETECTION (Isolation Forest) → ROOT CAUSE (XGBoost + SHAP)
+       ↓
+GRID STATE AGGREGATION
+       ↓
+MATHEMATICAL OPTIMIZATION (Google OR-Tools / MILP)
+       ↓
+LOAD BALANCING & CURTAILMENT MINIMISATION PLAN
+       ↓
+IBM WATSONX.AI / BOB OPERATOR BRIEF & COPILOT
+       ↓
+OPERATOR DASHBOARD (React + Tailwind + Recharts)
 ```
 
----
-
-## 3. Strict Rules & Guardrails for Agents
-
-### 🚫 Prohibited Actions
-- **NEVER** commit `.env` or any real API keys/credentials to Git. Always use `.env.example` with dummy placeholders.
-- **NEVER** leave square brackets `[...]` or unedited template text in `README.md` or docs.
-- **NEVER** rename, delete, or alter the schema of `submission.yaml`.
-- **NEVER** modify `.github/workflows/validate.yml`.
-- **NEVER** place source code outside `src/`.
-
-### ✅ Mandatory Quality Checks Before Any Commit
-1. **Validation Check:** Verify `submission.yaml` parses without syntax errors and all `# REQUIRED` fields are non-empty.
-2. **Setup Reproducibility:** Ensure any newly introduced dependency (npm, pip, docker) is documented in `docs/setup-guide.md` and added to `package.json` / `requirements.txt`.
-3. **Environment Sync:** Whenever a new environment variable is referenced in code, immediately add it with an explanatory comment to `src/.env.example`.
+### The 4 Non-Negotiable Architectural Rules
+1. **Rule A — ML is responsible for PREDICTIONS only:**
+   - LightGBM (Demand, Solar, Wind), XGBoost (Spike classification, Root cause), Isolation Forest (Anomalies).
+   - ML models predict and diagnose; they **never** invent dispatch decisions or schedule grid resources.
+2. **Rule B — The Optimizer is responsible for DECISIONS:**
+   - Google OR-Tools / MILP engine calculates battery dispatch, flexible load shifting, curtailment minimisation, and verifies feasibility.
+   - The LLM must **never** invent dispatch numbers or bypass the optimizer.
+3. **Rule C — LLM (watsonx.ai / Bob) is responsible for COMMUNICATION:**
+   - Interprets structured outputs, generates operator briefs, answers operator questions, and calls tools.
+   - Preserves mathematical ground truth: never hallucinations, never claims correlation is causation.
+4. **Rule D — Frontend contains PRESENTATION logic only:**
+   - React + Tailwind + Recharts/Plotly. Purely consumes typed REST/SSE endpoints. No embedded ML, optimization, or physics calculations.
 
 ---
 
-## 4. IBM Bob (BobShell) Integration Architecture
+## 2. 4-Member Ownership Boundaries (Strict Isolation)
 
-To ensure the **10-point IBM Bob Integration** is fully captured, Bob must serve one or more of the following core roles:
+To prevent merge collisions during the 8-hour sprint, strict directory ownership is enforced:
 
-1. **Autonomous Tool Operator via MCP:**
-   - Expose backend APIs, data pipelines, or runbook triggers as a custom **MCP Server**.
-   - Configure Bob via `bob mcp add` to call tools directly (e.g. log analysis, remediation triggers, watsonx querying).
-2. **Agentic Orchestrator:**
-   - Use Bob's headless mode (`bob run "<task>"`) in CI/CD or backend scripts to automate reasoning, triage, or code transformations.
-3. **Interactive Developer / Ops Copilot:**
-   - Enable operators to query system metrics, trigger deployments, or summarize incidents in natural language via BobShell.
+| Member | Role | Branch | Owned Directories |
+| :--- | :--- | :--- | :--- |
+| **Member 1 (Leader)** | System Architect, API Gateway, Frontend, LLM/Agent, Contracts | `leader/integration` | `apps/api/**`, `apps/web/**`, `agent/**`, `shared/contracts/**`, `shared/types/**`, `tests/integration/**`, `docs/**`, `docker-compose.yml`, `.env.example`, `submission.yaml` |
+| **Member 2** | Data + Demand Forecasting | `member/data-forecast` | `services/data/**`, `services/forecasting/**`, `ml/models/demand/**`, `ml/experiments/demand/**` |
+| **Member 3** | Renewable Intelligence | `member/renewable-intelligence` | `services/renewable/**`, `ml/models/renewable/**`, `ml/experiments/renewable/**` |
+| **Member 4** | Grid Optimization | `member/grid-optimization` | `services/optimization/**`, `ml/experiments/optimization/**` |
+
+### Prohibited Overlaps
+- Only Member 1 (Team Leader) modifies `shared/contracts/**`, `shared/types/**`, `package.json`, `tsconfig.json`, `docker-compose.yml`, and `agent.md`.
+- No member commits directly to `main`. All merges flow through PRs into `leader/integration` after contract checks.
 
 ---
 
-## 5. Development Workflows & Commands
+## 3. Shared Contracts (Ground Truth Interfaces)
 
-### Running IBM Bob Shell
-- **Interactive UI:** `bob chat` (or with auto-approval for scripts: `bob chat --auto-approve`)
-- **Headless Task Execution:** `bob run "Analyze logs in src/logs and trigger fix"`
+All modules exchange data strictly using the TypeScript contracts frozen in `shared/contracts/`:
 
-### MCP Server Management in Bob
-> **Note for Windows / PowerShell:** Stdio servers require a `--` separator before arguments. In PowerShell, quote the separator as ``--`` so PowerShell does not strip it:
-- **Add custom stdio server:** `bob mcp add <name> <command> "--" <args...>`
-  - Example: `bob mcp add project-tools node "--" ./src/mcp-server/index.js`
-- **Add via raw JSON:** `bob mcp add-json <name> '<json-config>'`
-- **Direct config file:** Edit [.bob/mcp.json](file:///f:/bob-ai-hackthon-Relentless-Gladiators/.bob/mcp.json) directly.
-- **List servers:** `bob mcp list`
-- **Remove server:** `bob mcp remove <name>`
+### A. `DemandForecast`
+```typescript
+export interface DemandForecast {
+  zoneId: string;
+  generatedAt: string;
+  horizonMinutes: 15 | 30 | 60;
+  points: {
+    timestamp: string;
+    demandMw: number;
+    lowerBoundMw?: number;
+    upperBoundMw?: number;
+  }[];
+  spikeRisk: {
+    level: "normal" | "moderate" | "severe";
+    probability: number;
+    predictedPeakMw: number;
+  };
+  modelVersion: string;
+}
+```
 
-### Verification Routine
-Before pushing to GitHub, execute:
-```bash
-# Verify no real secrets are staged
-git status
+### B. `RenewableStatus`
+```typescript
+export interface RenewableStatus {
+  assetId: string;
+  assetType: "solar" | "wind" | "hydro";
+  timestamp: string;
+  expectedMw: number;
+  actualMw: number;
+  performanceRatio: number; // actual / expected
+  anomaly: boolean;
+  anomalyScore?: number;
+  likelyRootCause?: {
+    category: "cloud_cover" | "inverter_fault" | "soiling" | "curtailment" | "sensor_error";
+    confidence: number;
+    evidence: string;
+  };
+}
+```
 
-# Check for residual bracket placeholders in README
-grep -n "\[" README.md
-
-# Verify documentation existence
-test -f docs/setup-guide.md
-test -f demo/demo-video-link.txt
+### C. `OptimizationResult`
+```typescript
+export interface OptimizationResult {
+  scenarioId: string;
+  status: "feasible" | "infeasible";
+  actions: {
+    resourceId: string;
+    actionType: "battery_charge" | "battery_discharge" | "shift_flexible_load" | "curtail_solar" | "curtail_wind";
+    powerMw: number;
+    startTime: string;
+    endTime: string;
+  }[];
+  before: {
+    demandMw: number;
+    renewableMw: number;
+    curtailmentMw: number;
+    gridStressIndex: number; // 0 to 1
+  };
+  after: {
+    demandMw: number;
+    renewableMw: number;
+    curtailmentMw: number;
+    gridStressIndex: number;
+  };
+  objectiveValue: number;
+}
 ```
 
 ---
 
-## 6. Tone & Output Format
-- Deliver production-ready code with clean typing, error handling, and comments.
-- Prioritize architectural clarity, security by default, and reproducible setup commands.
+## 4. IBM Bob (BobShell) Load-Bearing Integration
+
+To secure all **10 points for IBM Bob Integration**, Bob must be actively executing in the operational loop, not just cosmetically mentioned.
+
+### Bob's 3 Operational Roles
+1. **Tool-Equipped Grid Copilot via MCP:**
+   Bob connects to `apps/api` via Model Context Protocol tools:
+   - `get_current_grid_state()`
+   - `get_demand_forecast(zoneId, horizon)`
+   - `get_renewable_anomalies()`
+   - `analyze_root_cause(assetId)`
+   - `run_optimization(scenarioId)`
+   - `simulate_action(actionParams)`
+2. **Headless Incident & Brief Automator (`bob run`):**
+   Automated cron/script invoking Bob to synthesize the 15-minute Operator Brief from the structured pipeline outputs.
+3. **Automated Submission Validator:**
+   Bob executes verification suites and checks `submission.yaml` and `.github/workflows/validate.yml` invariants before git push.
+
+### Configuring Bob MCP Tools (PowerShell / Windows Syntax)
+```powershell
+# In PowerShell, always quote the '--' separator
+bob mcp add gridpilot-api node "--" ./apps/api/dist/mcp-server.js
+# Or register via JSON config in .bob/mcp.json
+```
+
+---
+
+## 5. Hackathon Submission Checklist & Invariants
+
+Automated GitHub Action `.github/workflows/validate.yml` runs on every push:
+1. `submission.yaml` exists and is 100% valid YAML (all `# REQUIRED` fields filled, no empty strings).
+2. `docs/setup-guide.md` exists and contains reproducible end-to-end setup commands tested on a clean machine.
+3. `demo/demo-video-link.txt` contains a valid, public/unlisted URL (YouTube/Loom/Box) of 3-5 min running demo.
+4. `demo/screenshots/` has at least 3 sequential PNGs:
+   - `01-command-center.png`
+   - `02-anomaly-root-cause.png`
+   - `03-optimization-result.png`
+5. `README.md` contains ZERO bracket placeholders `[...]`.
+6. `.env` is in `.gitignore` — NEVER commit real credentials. `src/.env.example` must contain all required variable keys.
+
+---
+
+## 6. End-to-End Deterministic Scenario: `DEMAND_SPIKE_PLUS_RENEWABLE_DROP`
+
+The final integration test must prove the full pipeline on this scenario:
+1. **Replay Step:** Load historical OpenSTEF 2024 timestamp.
+2. **Forecasting:** LightGBM predicts +18% demand spike over next 30 min. XGBoost classifies severity: `Severe Spike`.
+3. **Renewables:** LightGBM predicts 42 MW solar, but actual output drops to 19 MW. Isolation Forest flags anomaly (Score 0.88).
+4. **Root Cause:** XGBoost + SHAP isolates `cloud_cover` with 84% confidence.
+5. **Optimization:** OR-Tools solves MILP model: dispatches 15 MW battery storage, shifts 8 MW flexible industrial load, balances grid stress from 0.89 to 0.42.
+6. **Operator Brief:** Bob / watsonx generates concise 8-section incident report with actionable recommendations.
+7. **UI:** React dashboard updates live with telemetry, comparison charts, and AI chat explanation.

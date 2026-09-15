@@ -85,6 +85,9 @@ demo/*.mkv
 # ── Docker volumes / local data ───────────────────────────────────────────────
 data/
 logs/
+TEAM_LEADER_PLAYBOOK.md
+GridPilot_Bob_Usage_Plan.md
+GridPilot_U2_8Hour_Execution_Plan.md
 *.log
 
 # ── Jupyter Notebooks (optional: remove if you want to commit notebooks) ──────
