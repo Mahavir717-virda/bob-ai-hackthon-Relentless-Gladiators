@@ -216,5 +216,213 @@ class TestDemandFeaturePipeline(unittest.TestCase):
             self.assertEqual(len(feat_df[w_col].dropna()), self.n_rows)
 
 
+    # ------------------------------------------------------------------
+    # Timestamp ordering
+    # ------------------------------------------------------------------
+
+    def test_transform_sorts_unsorted_input(self) -> None:
+        """
+        transform() must sort rows by timestamp before computing features.
+
+        If the input is shuffled, lag values at each output row must still
+        equal the value that was 'periods' steps earlier in calendar time,
+        not in the original (shuffled) row order.
+        """
+        # Shuffle the standard 200-row dataset
+        df_shuffled = self.df.sample(frac=1.0, random_state=0).reset_index(drop=True)
+
+        feat_df = self.pipeline.transform(df_shuffled)
+
+        # Output must be sorted chronologically
+        ts_out = pd.to_datetime(feat_df["timestamp"])
+        self.assertTrue(
+            (ts_out.diff().iloc[1:] >= pd.Timedelta(0)).all(),
+            "transform() output is not chronologically sorted!",
+        )
+
+        # lag_15m at any row must equal demand_mw exactly one step earlier in
+        # the *sorted* output, not in the shuffled input order.
+        sorted_demand = feat_df["demand_mw"].reset_index(drop=True)
+        expected_lag1 = sorted_demand.shift(1)
+        actual_lag1 = feat_df["demand_mw_lag_15m"].reset_index(drop=True)
+
+        valid = expected_lag1.notna()
+        mismatches = (actual_lag1[valid] != expected_lag1[valid]).sum()
+        self.assertEqual(
+            mismatches,
+            0,
+            "lag_15m values do not match chronologically sorted demand after shuffled input!",
+        )
+
+    def test_output_timestamp_monotonic_ascending(self) -> None:
+        """
+        Even when called on an already-sorted DataFrame, the output
+        timestamp column must be strictly monotonically increasing.
+        """
+        feat_df = self.pipeline.transform(self.df)
+        ts = pd.to_datetime(feat_df["timestamp"])
+        diffs = ts.diff().iloc[1:]
+        self.assertTrue(
+            (diffs > pd.Timedelta(0)).all(),
+            "Output timestamps are not strictly monotonically increasing!",
+        )
+
+    # ------------------------------------------------------------------
+    # Missing history (insufficient rows for a given lag)
+    # ------------------------------------------------------------------
+
+    def test_lag_nan_for_insufficient_history(self) -> None:
+        """
+        When fewer rows exist than required for a lag, the corresponding
+        feature cells must be NaN — never a spurious numeric value.
+
+        Specifically:
+          - lag_15m  needs 1 prior row  → row 0 is NaN
+          - lag_30m  needs 2 prior rows → rows 0-1 are NaN
+          - lag_60m  needs 4 prior rows → rows 0-3 are NaN
+          - lag_1440m needs 96 prior rows → rows 0-95 are NaN
+        """
+        # Use only 10 rows — enough to test the first three lags but not the 24h lag
+        df_short = self.df.iloc[:10].copy().reset_index(drop=True)
+        feat_df = self.pipeline.transform(df_short)
+
+        expected_nan_counts = {
+            "demand_mw_lag_15m": 1,
+            "demand_mw_lag_30m": 2,
+            "demand_mw_lag_60m": 4,
+            "demand_mw_lag_1440m": 10,  # all 10 rows are NaN: need 96, only have 10
+        }
+
+        for col, expected_nans in expected_nan_counts.items():
+            self.assertIn(col, feat_df.columns, f"{col} missing from output!")
+            actual_nans = feat_df[col].isna().sum()
+            self.assertEqual(
+                actual_nans,
+                expected_nans,
+                f"{col}: expected {expected_nans} NaN rows with 10-row input, got {actual_nans}!",
+            )
+
+    def test_single_row_all_lags_nan(self) -> None:
+        """
+        A single-row DataFrame must produce all-NaN lag and rolling features
+        (there is no past to look back at).
+        """
+        df_one = self.df.iloc[:1].copy().reset_index(drop=True)
+        feat_df = self.pipeline.transform(df_one)
+
+        lag_cols = [c for c in feat_df.columns if "_lag_" in c]
+        roll_cols = [c for c in feat_df.columns if "_roll_" in c]
+        momentum_cols = [c for c in feat_df.columns if "_diff_" in c]
+
+        for col in lag_cols + roll_cols + momentum_cols:
+            self.assertTrue(
+                feat_df[col].isna().all(),
+                f"{col} should be all-NaN for a single-row input, but got a value!",
+            )
+
+    def test_minimum_rows_for_24h_lag(self) -> None:
+        """
+        lag_1440m requires exactly 96 prior rows.
+        Row 96 (0-indexed) must be the first non-NaN value for that feature.
+        """
+        # 97 rows: row 0-95 → NaN, row 96 → first valid lag_1440m
+        df_97 = self.df.iloc[:97].copy().reset_index(drop=True)
+        feat_df = self.pipeline.transform(df_97)
+
+        col = "demand_mw_lag_1440m"
+        self.assertIn(col, feat_df.columns)
+
+        # Rows 0-95 must be NaN
+        self.assertTrue(
+            feat_df[col].iloc[:96].isna().all(),
+            f"Expected rows 0-95 to be NaN in {col} with 97-row input!",
+        )
+        # Row 96 must be a valid number (equal to row 0's demand_mw)
+        self.assertFalse(
+            pd.isna(feat_df.loc[96, col]),
+            f"Expected row 96 to be non-NaN in {col} with 97-row input!",
+        )
+        self.assertAlmostEqual(
+            feat_df.loc[96, col],
+            self.df.loc[0, "demand_mw"],
+            places=6,
+            msg=f"Row 96 of {col} should equal row 0 demand_mw!",
+        )
+
+    # ------------------------------------------------------------------
+    # Future-data leakage (extended cases)
+    # ------------------------------------------------------------------
+
+    def test_lag_values_never_reference_current_or_future_row(self) -> None:
+        """
+        Explicit proof: at row i, every lag column must reference a row
+        index strictly less than i (i.e. shift >= 1).
+
+        We verify this by checking that lag_15m[i] == demand_mw[i-1] for
+        every valid row, which means row i was NOT used to produce lag_15m[i].
+        """
+        feat_df = self.pipeline.transform(self.df)
+
+        for i in range(1, len(feat_df)):
+            lag_val = feat_df.loc[i, "demand_mw_lag_15m"]
+            past_val = feat_df.loc[i - 1, "demand_mw"]
+            if not pd.isna(lag_val):
+                self.assertAlmostEqual(
+                    lag_val,
+                    past_val,
+                    places=6,
+                    msg=f"At row {i}: lag_15m={lag_val} != demand_mw[{i-1}]={past_val} — possible leakage!",
+                )
+
+    def test_rolling_mean_excludes_current_row(self) -> None:
+        """
+        For window=4, the rolling mean at row i must equal the mean of
+        demand_mw[i-4 : i] — i.e. rows i-4, i-3, i-2, i-1 (never row i).
+
+        We verify this by checking that if demand_mw[i] is changed, the
+        rolling mean at row i does not change.
+        """
+        config_small = FeatureConfig(
+            target_col="demand_mw",
+            timestamp_col="timestamp",
+            asset_col=None,  # no groupby, simpler path
+            freq_minutes=15,
+            lag_minutes=[15],
+            rolling_windows=[4],
+            rolling_stats=["mean"],
+            include_momentum=False,
+            include_cyclical=False,
+        )
+        pipeline = DemandFeaturePipeline(config_small)
+
+        # Compute reference features
+        df_ref = self.df[["timestamp", "demand_mw"]].copy()
+        feat_ref = pipeline.transform(df_ref)
+
+        # Mutate only the current row's demand_mw at row 50, then re-run
+        df_mut = df_ref.copy()
+        df_mut.loc[50, "demand_mw"] = 999999.0
+        feat_mut = pipeline.transform(df_mut)
+
+        roll_col = "demand_mw_roll_mean_4"
+        # The rolling mean AT row 50 must be identical in both runs
+        # because roll_mean_4[50] depends only on rows 46-49
+        self.assertAlmostEqual(
+            feat_ref.loc[50, roll_col],
+            feat_mut.loc[50, roll_col],
+            places=6,
+            msg="roll_mean_4 at row 50 changed when only row 50's demand_mw was mutated — current row leakage!",
+        )
+
+        # Rows 51-54 SHOULD differ (they now have row 50 in their past window)
+        for future_row in [51, 52, 53, 54]:
+            self.assertNotAlmostEqual(
+                feat_ref.loc[future_row, roll_col],
+                feat_mut.loc[future_row, roll_col],
+                places=6,
+                msg=f"roll_mean_4 at row {future_row} did NOT change when row 50 was mutated — past not used!",
+            )
+
+
 if __name__ == "__main__":
     unittest.main()
