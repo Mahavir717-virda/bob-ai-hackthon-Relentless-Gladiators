@@ -1,117 +1,73 @@
-# How to Submit Your Hackathon Entry
+# How to Contribute & Engineering Boundaries
 
-Follow these steps to set up your submission repository correctly.
-The judges depend on this structure to review your entry — deviations may affect your score.
-
----
-
-## Step 1 — Fork This Template
-
-1. Click the **"Use this template"** button at the top of this repository
-   (or **Fork** if you prefer)
-2. Name your repository: `bob-ai-hackathon-[your-team-name]`
-   (e.g., `bob-ai-hackathon-orion-squad`)
-3. Set visibility to **Public** so judges can access it
-4. Click **Create repository**
+Follow these steps for both team development workflow and final hackathon submission.
 
 ---
 
-## Step 2 — Clone Your Fork Locally
+## 1. 4-Member Ownership Boundaries & Git Workflow
 
-```bash
-git clone https://github.com/[your-org]/bob-ai-hackathon-[your-team-name].git
-cd bob-ai-hackathon-[your-team-name]
-```
+To prevent merge collisions and preserve engineering boundaries, each team member owns a specific branch and directory subset:
 
----
+| Member | Role | Dedicated Branch | Owned Directories |
+| :--- | :--- | :--- | :--- |
+| **Member 1 (Leader)** | System Architect, API Gateway, Frontend, LLM/Agent, Contracts | `leader/integration` | `apps/api/**`, `apps/web/**`, `agent/**`, `shared/contracts/**`, `shared/types/**`, `tests/integration/**`, `docs/**`, `docker-compose.yml`, `.env.example`, `submission.yaml` |
+| **Member 2** | Data + Demand Forecasting | `member/data-forecast` | `services/data/**`, `services/forecasting/**`, `ml/models/demand/**`, `ml/experiments/demand/**` |
+| **Member 3** | Renewable Intelligence | `member/renewable-intelligence` | `services/renewable/**`, `ml/models/renewable/**`, `ml/experiments/renewable/**` |
+| **Member 4** | Grid Optimization | `member/grid-optimization` | `services/optimization/**`, `ml/experiments/optimization/**` |
 
-## Step 3 — Fill in the Required Files
-
-Work through these files in order:
-
-### 3a. `submission.yaml` ← **Start here**
-This is the most important file. Judges use it to get an overview of your entry.
-
-- Open [`submission.yaml`](submission.yaml)
-- Fill in **every field marked `# REQUIRED`**
-- Read the inline comments — they explain what each field expects
-
-### 3b. `README.md`
-- Replace every `[placeholder in brackets]` with your actual content
-
-### 3c. `docs/`
-Fill in all four documentation files:
-| File | What to write |
-|---|---|
-| [`docs/problem-statement.md`](docs/problem-statement.md) | The problem you're solving |
-| [`docs/solution-overview.md`](docs/solution-overview.md) | How your solution works |
-| [`docs/architecture.md`](docs/architecture.md) | Technical architecture diagram |
-| [`docs/setup-guide.md`](docs/setup-guide.md) | Exact steps to run your project |
-
-### 3d. `src/`
-- Put all your source code inside [`src/`](src/)
-- Copy [`src/.env.example`](src/.env.example) and add your environment variables to it
-- **Never commit a real `.env` file** — it is already in `.gitignore`
-
-### 3e. `demo/`
-| File | What to do |
-|---|---|
-| [`demo/demo-video-link.txt`](demo/demo-video-link.txt) | Replace placeholder URL with your real video link |
-| [`demo/live-demo-url.txt`](demo/live-demo-url.txt) | Add your deployed demo URL (or write "NOT DEPLOYED") |
-| [`demo/screenshots/`](demo/screenshots/) | Add 3+ screenshots named `01-*.png`, `02-*.png`, etc. |
-
-### 3f. `presentation/`
-- Add your slide deck as [`presentation/slides.pdf`](presentation/) (preferred) or `.pptx`
+### Prohibited Overlaps & Branch Rules
+- Only **Member 1 (Team Leader)** modifies `shared/contracts/**`, `shared/types/**`, `package.json`, `tsconfig.json`, `docker-compose.yml`, and `agent.md`.
+- No team member commits directly to `main`.
+- All feature work is submitted via Pull Request into `leader/integration`.
+- All PRs must verify contract conformance and test execution prior to merging.
 
 ---
 
-## Step 4 — Verify Your Submission Passes Validation
+## 2. The 4 Non-Negotiable Architectural Rules
 
-Every push to your repository triggers the **Validate Submission** GitHub Action automatically.
-
-To check manually:
-1. Go to your repo on GitHub
-2. Click the **Actions** tab
-3. Look for **✅ Validate Submission**
-4. A green checkmark means your submission is structurally complete
-5. A red X means something is missing — click the run to see what
-
-You can also run the validation locally:
-```bash
-# Install yq first: https://github.com/mikefarah/yq#install
-yq '.' submission.yaml   # checks YAML is valid
-```
+1. **Rule A — ML is responsible for PREDICTIONS only:**
+   - LightGBM (Demand, Solar, Wind), XGBoost (Spike classification, Root cause), Isolation Forest (Anomalies).
+   - ML models predict and diagnose; they **never** invent dispatch decisions or schedule grid resources.
+2. **Rule B — The Optimizer is responsible for DECISIONS:**
+   - Google OR-Tools / MILP engine calculates battery dispatch, flexible load shifting, curtailment minimisation, and verifies feasibility.
+   - The LLM must **never** invent dispatch numbers or bypass the optimizer.
+3. **Rule C — LLM (watsonx.ai / Bob) is responsible for COMMUNICATION:**
+   - Interprets structured outputs, generates operator briefs, answers operator questions, and calls tools.
+   - Preserves mathematical ground truth: never hallucinations, never claims correlation is causation.
+4. **Rule D — Frontend contains PRESENTATION logic only:**
+   - React + Tailwind + Recharts/Plotly. Purely consumes typed REST/SSE endpoints. No embedded ML, optimization, or physics calculations.
 
 ---
 
-## Step 5 — Submit Your Repository URL
+## 3. How to Submit Your Hackathon Entry
 
-Once validation passes:
+### Step 1 — Verify Invariants
+1. Click the **"Use this template"** button or use the team repository: `bob-ai-hackathon-[team-name]`.
+2. Confirm repository visibility is **Public**.
 
-1. Copy your repository URL:
-   `https://github.com/[your-org]/bob-ai-hackathon-[your-team-name]`
+### Step 2 — Fill in the Required Files
+- **`submission.yaml`**: Complete every field marked `# REQUIRED`.
+- **`README.md`**: No placeholder brackets remain.
+- **`docs/`**: Complete `problem-statement.md`, `solution-overview.md`, `architecture.md`, and `setup-guide.md`.
+- **`demo/`**:
+  - `demo/demo-video-link.txt`: Video URL (3–5 min showing live pipeline).
+  - `demo/live-demo-url.txt`: Deployed demo URL (or "NOT DEPLOYED").
+  - `demo/screenshots/`: Minimum 3 screenshots (`01-*.png`, `02-*.png`, `03-*.png`).
+- **`presentation/`**: Slide deck present as `presentation/slides.pdf`.
 
-2. Submit it via the **official entry form** at:
-   `[ORGANIZER: INSERT FORM URL HERE]`
-
-3. **Deadline:** `[ORGANIZER: INSERT DEADLINE HERE]`
-
-> ⚠️ Submissions after the deadline will not be reviewed.
-> Changes after the deadline are not considered — make sure everything is complete before submitting.
+### Step 3 — Verify Validation Passes
+Ensure the automated GitHub Action **Validate Submission** passes (green checkmark).
 
 ---
 
-## Checklist Before You Submit
+## 4. Checklist Before Final Submission
 
 - [ ] `submission.yaml` — all required fields filled
 - [ ] `README.md` — no `[placeholder]` text remaining
-- [ ] `docs/setup-guide.md` — someone else can run your project using these instructions
-- [ ] `src/` — all source code committed (no `node_modules`, no `.env`)
-- [ ] `demo/demo-video-link.txt` — real video URL (3–5 min showing the app working)
-- [ ] `demo/screenshots/` — at least 3 screenshots of the running application
+- [ ] `docs/setup-guide.md` — verified on a clean machine
+- [ ] `shared/contracts` — contracts validated and unchanged by non-leads
+- [ ] `demo/demo-video-link.txt` — valid public video URL
+- [ ] `demo/screenshots/` — at least 3 screenshots
 - [ ] `presentation/slides.pdf` — slide deck present
-- [ ] GitHub Actions **✅ Validate Submission** is green
+- [ ] GitHub Actions **Validate Submission** is green
 - [ ] Repository is **Public**
-- [ ] Entry form submitted before the deadline
-
----
