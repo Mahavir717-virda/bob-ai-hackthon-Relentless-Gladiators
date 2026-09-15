@@ -17,7 +17,10 @@ from typing import Any
 import joblib
 import numpy as np
 import pandas as pd
-import shap
+try:
+    import shap
+except ImportError:
+    shap = None
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 from xgboost import XGBRegressor
 

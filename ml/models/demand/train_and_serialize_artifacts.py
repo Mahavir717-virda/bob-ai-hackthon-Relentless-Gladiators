@@ -84,9 +84,11 @@ def run_training_and_serialization() -> None:
     joblib.dump(container, lgbm_pkl_path)
     print(f"Saved: {lgbm_pkl_path} (size: {lgbm_pkl_path.stat().st_size} bytes)")
 
-    # Save individual horizon artifacts as well
+    # Save native text model files for robust cross-platform loading
     for h, b in models_dict.items():
-        joblib.dump(b, models_dir / f"demand_lgbm_{h}m.pkl")
+        txt_path = models_dir / f"demand-lgbm-v1_h{h}min.txt"
+        b.save_model(str(txt_path))
+        print(f"Saved native text model: {txt_path}")
 
     # Demand Metadata
     metadata_out = {
@@ -203,9 +205,11 @@ def run_training_and_serialization() -> None:
     print("VERIFICATION: Reloading & Testing Serialized Artifacts")
     print("=" * 70)
 
-    # Load demand_lgbm.pkl
-    loaded_lgbm = joblib.load(lgbm_pkl_path)
-    print(f"Reloaded demand_lgbm.pkl type: {type(loaded_lgbm)}")
+    # Load demand_lgbm via ModelLoader
+    from services.forecasting.model_loader import ModelLoader
+    loader = ModelLoader(models_dir=models_dir)
+    loaded_lgbm = loader.get_demand_model(force_reload=True)
+    print(f"Reloaded demand model type: {type(loaded_lgbm)}")
     test_sample = features_df.tail(10)[loaded_lgbm.feature_names]
     preds_15 = loaded_lgbm.predict(test_sample, horizon=15)
     preds_30 = loaded_lgbm.predict(test_sample, horizon=30)

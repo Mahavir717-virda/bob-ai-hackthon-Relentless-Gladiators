@@ -2,7 +2,7 @@
   "model_name": "GridPilot Demand LightGBM Forecaster",
   "algorithm": "LightGBM Regressor (Multi-Horizon Boosters)",
   "version": "demand-lgbm-v1",
-  "training_timestamp": "2026-09-15T14:41:21.544395+00:00",
+  "training_timestamp": "2026-09-15T15:32:43.078431+00:00",
   "target": "demandMw",
   "horizons": [
     15,
