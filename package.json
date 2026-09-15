@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "start:api": "node --experimental-strip-types apps/api/src/index.ts",
+    "start:web": "npm --prefix apps/web run dev",
+    "build:web": "npm --prefix apps/web run build",
     "test": "node --test --experimental-strip-types tests/integration/**/*.test.ts",
     "test:contracts": "node --test --experimental-strip-types tests/integration/contracts.test.ts",
     "test:api": "node --test --experimental-strip-types tests/integration/api-gateway.test.ts"
